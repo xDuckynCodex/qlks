@@ -46,12 +46,8 @@ const roomTypeOptions = [
         label: "Family",
     },
     {
-        value: "deluxe",
-        label: "Deluxe",
-    },
-    {
-        value: "presidential",
-        label: "Presidential",
+        value: "vip",
+        label: "Vip",
     },
 ];
 
@@ -61,20 +57,20 @@ const statusOptions = [
         label: "Available",
     },
     {
-        value: "booked",
-        label: "Booked",
+        value: "reserved",
+        label: "Reserved",
     },
     {
         value: "maintenance",
         label: "Maintenance",
     },
     {
-        value: "checked_out",
-        label: "Checked Out",
+        value: "cleaning",
+        label: "Cleaning",
     },
     {
-        value: "checked_in",
-        label: "Checked In",
+        value: "occupied",
+        label: "Occupied",
     },
 ];
 
@@ -123,7 +119,7 @@ export function DataTable<TData, TValue>({
                 />
                 <ColumnFilter
                     filterLabel="Room type"
-                    columnFilter="LoaiPhong"
+                    columnFilter="TenLP"
                     options={roomTypeOptions}
                     table={table}
                 />

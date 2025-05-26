@@ -1,4 +1,7 @@
-import { signIn } from "@/auth";
+"use server";
+import { signIn, signOut } from "@/auth";
+import { AuthError } from "next-auth";
+import { pool } from "./db";
 
 export const getSP = async () => {
     const res = await fetch("/api/test?con=Thai%20Lan", {
@@ -14,11 +17,32 @@ export const getSP = async () => {
     return res.json();
 };
 
-export const login = async (username: string, password: string) => {
-    console.log("Login data:", { username, password });
-    const res = await signIn("Login", {
-        username,
-        password,
-    });
-    console.log("Login response:", res);
+export const authenticate = async (username: string, password: string) => {
+    try {
+        const res = await signIn("credentials", {
+            username,
+            password,
+            redirect: false,
+        });
+
+        return res;
+    } catch (error) {
+        if (error instanceof AuthError) {
+            switch (error.type) {
+                case "CredentialsSignin":
+                    return "Invalid credentials.";
+                default:
+                    return "Something went wrong.";
+            }
+        }
+        throw error;
+    }
+};
+
+export const logout = async () => {
+    await signOut({ redirectTo: "/login" });
+};
+
+export const insertDatPhong = async (data: any) => {
+    const res = await pool.request().input("MaDP", data.MaDP);
 };

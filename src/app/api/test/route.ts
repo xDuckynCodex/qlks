@@ -1,6 +1,6 @@
 import { pool } from "@/lib/db";
 
-const getSP = async (con: string) => {
+const getSP = async () => {
     try {
         const res = await pool.request().query(`select * from NhanVien`);
         return res;
@@ -10,14 +10,9 @@ const getSP = async (con: string) => {
     }
 };
 
-export async function GET(request: Request) {
-    const url = new URL(request.url);
-    const con = url.searchParams.get("con");
-    if (!con) {
-        return new Response("Missing 'con' parameter", { status: 400 });
-    }
+export async function GET() {
     try {
-        const data = await getSP(con);
+        const data = await getSP();
 
         return new Response(JSON.stringify(data.recordset), {
             status: 200,

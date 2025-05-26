@@ -19,16 +19,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MoreHorizontal } from "lucide-react";
 import React from "react";
-import { Phong } from "./columns";
+import { ThongKePhong } from "./columns";
 
 interface ActionsMenuProps {
-    phong: Phong;
+    phong: ThongKePhong;
 }
 
 const ActionsMenu = ({ phong }: ActionsMenuProps) => {
     const canCheckIn =
-        phong.TinhTrang === "available" || phong.TinhTrang === "booked";
-    const canCheckOut = phong.TinhTrang === "checked_in";
+        phong.TinhTrang === "available" || phong.TinhTrang === "reserved";
+    const canCheckOut = phong.TinhTrang === "occupied";
     return (
         <Dialog>
             {/* dropdown menu */}

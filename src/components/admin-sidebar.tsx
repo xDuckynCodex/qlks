@@ -3,6 +3,7 @@ import { Calendar, Home, Inbox, Search, Settings } from "lucide-react";
 import {
     Sidebar,
     SidebarContent,
+    SidebarFooter,
     SidebarGroup,
     SidebarGroupContent,
     SidebarGroupLabel,
@@ -12,6 +13,7 @@ import {
     SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
+import { logout } from "@/lib/actions";
 
 // Menu items.
 const items = [
@@ -73,6 +75,17 @@ export function AdminSidebar() {
                     </SidebarGroupContent>
                 </SidebarGroup>
             </SidebarContent>
+            <SidebarFooter>
+                <form action={logout}>
+                    <SidebarMenuButton
+                        variant={"default"}
+                        type="submit"
+                        className="flex w-full justify-center"
+                    >
+                        Sign out
+                    </SidebarMenuButton>
+                </form>
+            </SidebarFooter>
         </Sidebar>
     );
 }

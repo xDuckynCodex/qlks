@@ -3,19 +3,14 @@
 import { ColumnDef } from "@tanstack/react-table";
 
 import ActionsMenu from "./actions-menu";
+import ClientDate from "./client-date";
 
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
-export type Phong = {
+export type ThongKePhong = {
     MaPhong: string;
-    LoaiPhong:
-        | "single"
-        | "double"
-        | "suite"
-        | "family"
-        | "deluxe"
-        | "presidential";
-    GiaPhong: number;
+    TenLP: "single" | "double" | "suite" | "family" | "vip";
+    Gia: number;
     TinhTrang: statusType;
     NgayDat: string;
     NgayNhan: string;
@@ -23,14 +18,14 @@ export type Phong = {
 };
 
 type statusType =
-    | "available"
-    | "booked"
     | "maintenance"
-    | "checked_out"
-    | "checked_in";
+    | "cleaning"
+    | "occupied"
+    | "available"
+    | "reserved";
 
 // Dinh nghia cac cot cua bang
-export const columns: ColumnDef<Phong>[] = [
+export const columns: ColumnDef<ThongKePhong>[] = [
     {
         id: "No.",
         header: () => <div className="text-center">No.</div>,
@@ -43,32 +38,24 @@ export const columns: ColumnDef<Phong>[] = [
         accessorKey: "MaPhong",
         header: () => <div className="text-center">Room ID</div>,
         cell: ({ row }) => {
-            const roomId: Phong["MaPhong"] = row.getValue("MaPhong");
+            const roomId: ThongKePhong["MaPhong"] = row.getValue("MaPhong");
             return <div className="text-center">{roomId}</div>;
         },
     },
     {
-        accessorKey: "LoaiPhong",
+        accessorKey: "TenLP",
         header: () => <div className="text-center">Room Type</div>,
         cell: ({ row }) => {
-            const roomType: Phong["LoaiPhong"] = row.getValue("LoaiPhong");
-            const roomTypeMap: Record<string, string> = {
-                single: "Single",
-                double: "Double",
-                suite: "Suite",
-                family: "Family",
-                deluxe: "Deluxe",
-                presidential: "Presidential",
-            };
+            const roomType: ThongKePhong["TenLP"] = row.getValue("TenLP");
 
-            return <div className="text-center">{roomTypeMap[roomType]}</div>;
+            return <div className="text-center">{roomType}</div>;
         },
     },
     {
-        accessorKey: "GiaPhong",
+        accessorKey: "Gia",
         header: () => <div className="text-center">Price</div>,
         cell: ({ row }) => {
-            const amount = parseFloat(row.getValue("GiaPhong"));
+            const amount = parseFloat(row.getValue("Gia"));
             const formatted = new Intl.NumberFormat("vi-VN", {
                 style: "currency",
                 currency: "VND",
@@ -82,15 +69,7 @@ export const columns: ColumnDef<Phong>[] = [
         header: () => <div className="text-center">Status</div>,
         cell: ({ row }) => {
             const status: statusType = row.getValue("TinhTrang");
-            const statusMap: Record<string, string> = {
-                available: "Available",
-                booked: "Booked",
-                maintenance: "Maintenance",
-                checked_out: "Checked Out",
-                checked_in: "Checked In",
-            };
-
-            return <div className="text-center">{statusMap[status]}</div>;
+            return <div className="text-center">{status}</div>;
         },
     },
     {
@@ -98,13 +77,7 @@ export const columns: ColumnDef<Phong>[] = [
         header: () => <div className="text-center">Booking Time</div>,
         cell: ({ row }) => {
             const bookingTime: string = row.getValue("NgayDat");
-            return (
-                <div className="text-center">
-                    {bookingTime
-                        ? new Date(bookingTime).toLocaleString("vi-VN")
-                        : "-"}
-                </div>
-            );
+            return <ClientDate time={bookingTime} />;
         },
     },
     {
@@ -112,13 +85,7 @@ export const columns: ColumnDef<Phong>[] = [
         header: () => <div className="text-center">Check-out Time</div>,
         cell: ({ row }) => {
             const checkInTime: string = row.getValue("NgayNhan");
-            return (
-                <div className="text-center">
-                    {checkInTime
-                        ? new Date(checkInTime).toLocaleString("vi-VN")
-                        : "-"}
-                </div>
-            );
+            return <ClientDate time={checkInTime} />;
         },
     },
     {
@@ -126,13 +93,7 @@ export const columns: ColumnDef<Phong>[] = [
         header: () => <div className="text-center">Check-out Time</div>,
         cell: ({ row }) => {
             const checkOutTime: string = row.getValue("NgayTra");
-            return (
-                <div className="text-center">
-                    {checkOutTime
-                        ? new Date(checkOutTime).toLocaleString("vi-VN")
-                        : "-"}
-                </div>
-            );
+            return <ClientDate time={checkOutTime} />;
         },
     },
     {

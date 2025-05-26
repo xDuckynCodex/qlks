@@ -1,11 +1,14 @@
 import React from "react";
 import BaoCaoChung from "./tt-chung";
 import { DollarSign } from "lucide-react";
-import { Component } from "./revenue-chart";
+import { BieuDo } from "./revenue-chart";
+import { fetchBieuDo } from "@/lib/data";
 
 const baoCao = [1, 2, 3, 4];
 
-const Page = () => {
+const Page = async () => {
+    const data = await fetchBieuDo();
+
     return (
         <div className="flex flex-col w-full space-y-4">
             <p className="text-2xl font-bold">Dashboard</p>
@@ -22,7 +25,7 @@ const Page = () => {
             <div className="w-4/5 mx-auto space-y-2">
                 <p className="text-2xl font-bold">Biểu đồ</p>
 
-                <Component />
+                <BieuDo data={data} />
             </div>
         </div>
     );

@@ -21,7 +21,8 @@ import {
     FormLabel,
     FormMessage,
 } from "./ui/form";
-import { login } from "@/lib/actions";
+import { authenticate } from "@/lib/actions";
+import { useRouter } from "next/navigation";
 
 const loginSchema = z.object({
     maNV: z.string().min(1, { message: "Ma NV không được để trống" }),
@@ -34,6 +35,8 @@ export function LoginForm({
     className,
     ...props
 }: React.ComponentPropsWithoutRef<"div">) {
+    const router = useRouter();
+
     const form = useForm<LoginFormData>({
         resolver: zodResolver(loginSchema),
         defaultValues: {
@@ -44,9 +47,13 @@ export function LoginForm({
 
     const onSubmit = async (data: LoginFormData) => {
         // Handle login logic here
-        const res = await login(data.maNV, data.password);
+        const res = await authenticate(data.maNV, data.password);
         console.log(res);
-        console.log("Login data:", data);
+        if (!res) {
+            alert("Đăng nhập không thành công");
+        } else {
+            router.push("/admin/dashboard");
+        }
     };
     return (
         <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -86,6 +93,7 @@ export function LoginForm({
                                             <FormControl>
                                                 <Input
                                                     {...field}
+                                                    type="password"
                                                     placeholder="Nhap ma mat khau..."
                                                 />
                                             </FormControl>
