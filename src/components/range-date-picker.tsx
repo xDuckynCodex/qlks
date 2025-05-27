@@ -12,18 +12,17 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover";
 import { ControllerRenderProps } from "react-hook-form";
-import { BookingFormData } from "./form-datphong";
 import { format } from "date-fns";
 
-interface DatePickerWithRangeProps
+interface DatePickerWithRangeProps<T extends Record<string, any>>
     extends React.HTMLAttributes<HTMLDivElement> {
-    field: ControllerRenderProps<BookingFormData, "date">;
+    field: ControllerRenderProps<T, "date">;
 }
 
-export function DatePickerWithRange({
+export function DatePickerWithRange<FType extends Record<string, any>>({
     className,
     field,
-}: DatePickerWithRangeProps) {
+}: DatePickerWithRangeProps<FType>) {
     return (
         <div className={cn("grid gap-2", className)}>
             <Popover>

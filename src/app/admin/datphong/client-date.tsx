@@ -6,7 +6,7 @@ import React from "react";
 const ClientDate = ({ time }: { time: string }) => {
     return (
         <div className="text-center">
-            {time ? format(time, "DD-MM-YYYY") : "-"}
+            {time ? format(time, "dd-MM-yyyy") : "-"}
         </div>
     );
 };

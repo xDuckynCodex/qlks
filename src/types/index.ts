@@ -1,70 +1,74 @@
-export interface KhachHang {
-    MaKH: string;
+// Enums
+export enum TenLP {
+    Single = "single",
+    Double = "double",
+    Suite = "suite",
+    Family = "family",
+    Vip = "vip",
+}
+
+export enum RoomStatus {
+    Available = "available",
+    Reserved = "reserved",
+    Occupied = "occupied",
+    Cleaning = "cleaning",
+    Maintenance = "maintenance",
+}
+
+export enum UserRole {
+    Customer = "customer",
+    Receptionist = "receptionist",
+    Housekeeper = "housekeeper",
+    ServiceManager = "serviceManager",
+    Administrator = "administrator",
+}
+
+// Interfaces
+export interface NGUOIDUNG {
+    MaND: string;
     HoTen: string;
-    CCCD: string;
     SDT: string;
+    CCCD: string;
     Email: string;
     DiaChi: string;
-    Hang: string;
+    ChucVu: UserRole;
+    MatKhau: string; // Optional, as it may not be needed in all contexts
 }
 
-export interface KhuyenMai {
-    MaKM: string;
-    TiLe: number;
-    NgayBD: string; // date
-    NgayKT: string; // date
-    MaKH: string;
+export interface LOAIPHONG {
+    MaLP: string;
+    TenLP: TenLP;
+    Gia: number; // money type in DB usually maps to number in TS
 }
 
-export interface Phong {
+export interface PHONG {
     MaPhong: string;
     MaLP: string;
-    GiaPhong: number;
-    TinhTrang: string;
+    TinhTrang: RoomStatus;
 }
 
-export interface LoaiPhong {
-    MaLP: string;
-    TenLP: string;
-    Gia: number;
-}
-
-export interface DatPhong {
+export interface DATPHONG {
     MaDP: string;
-    MaKH: string;
-    MaNV: string;
+    MaND_KhachHang: string;
+    MaND_NhanVien: string;
     MaPhong: string;
-    NgayDat: string; // date
-    NgayNhan: string; // date
-    NgayTra: string; // date
-    TienCoc: number;
+    NgayDat: Date | string; // date type in DB maps to Date object in TS
+    NgayNhan: Date | string;
+    NgayTra: Date | string;
+    TongTien: number; // money type in DB usually maps to number in TS
+    TienCoc: number; // money type in DB usually maps to number in TS
 }
 
-export interface NhanVien {
-    MaNV: string;
-    HoTen: string;
-    ChucVu: string;
-    SDT: string;
+export interface DICHVU {
+    MaDV: string;
+    TenDV: string;
+    DonGia: number; // money type in DB usually maps to number in TS
 }
 
-export interface HoaDon {
-    MaHD: string;
-    MaDP: string;
-    MaNV: string;
-    NgayLap: string; // date
-    TongTien: number;
-}
-
-export interface SuDungDichVu {
+export interface SDDDICHVU {
     MaDP: string;
     MaDV: string;
     SoLuong: number;
-    NSD: string; // date
+    NSD: Date | string; // date type in DB maps to Date object in TS
     DonViTinh: string;
-}
-
-export interface DichVu {
-    MaDV: string;
-    TenDV: string;
-    DonGia: number;
 }

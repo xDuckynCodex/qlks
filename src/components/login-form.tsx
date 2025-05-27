@@ -25,7 +25,12 @@ import { authenticate } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 
 const loginSchema = z.object({
-    maNV: z.string().min(1, { message: "Ma NV không được để trống" }),
+    username: z
+        .string()
+        .min(10, { message: "SDT không được để trống" })
+        .max(10, {
+            message: "SDT phải có 10 chữ số",
+        }),
     password: z.string().min(8),
 });
 
@@ -40,19 +45,18 @@ export function LoginForm({
     const form = useForm<LoginFormData>({
         resolver: zodResolver(loginSchema),
         defaultValues: {
-            maNV: "",
+            username: "",
             password: "",
         },
     });
 
     const onSubmit = async (data: LoginFormData) => {
         // Handle login logic here
-        const res = await authenticate(data.maNV, data.password);
-        console.log(res);
+        const res = await authenticate(data.username, data.password);
         if (!res) {
             alert("Đăng nhập không thành công");
         } else {
-            router.push("/admin/dashboard");
+            router.push("/");
         }
     };
     return (
@@ -70,14 +74,14 @@ export function LoginForm({
                             <div className="flex flex-col gap-6">
                                 <FormField
                                     control={form.control}
-                                    name="maNV"
+                                    name="username"
                                     render={({ field }) => (
                                         <FormItem className="grid gap-2">
-                                            <FormLabel>Ma NV</FormLabel>
+                                            <FormLabel>Số điện thoại</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     {...field}
-                                                    placeholder="Nhap ma NV..."
+                                                    placeholder="Nhap Số điện thoại..."
                                                 />
                                             </FormControl>
                                             <FormMessage />

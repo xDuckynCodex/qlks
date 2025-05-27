@@ -1,18 +1,20 @@
 "use server";
-import sql from "mssql";
+import { NVarChar } from "mssql";
 import bcrypt from "bcrypt";
 import { pool } from "./db";
-import { ThongKePhong } from "@/app/admin/datphong/columns";
-import { DatPhong, DichVu, NhanVien } from "@/types";
+import { ThongTinPhong } from "@/app/admin/datphong/columns";
+import { DATPHONG, DICHVU, NGUOIDUNG } from "@/types";
 
-export async function fetchNhanVien(
+export async function fetchNguoiDung(
     username: string,
     password: string
-): Promise<NhanVien | null> {
+): Promise<NGUOIDUNG | null> {
     const res = await pool
         .request()
         .input("username", username)
-        .query(`select * from NhanVien where MaNV = @username`);
+        .query<NGUOIDUNG>(
+            `select top 1 * from NGUOIDUNG where SDT = @username`
+        );
 
     const matchPwd = await bcrypt.compare(password, res.recordset[0].MatKhau);
     if (!matchPwd) {
@@ -21,10 +23,29 @@ export async function fetchNhanVien(
     return res.recordset[0];
 }
 
-export async function fetchPhong(): Promise<ThongKePhong[]> {
-    const res = await pool
-        .request()
-        .execute<ThongKePhong[]>(`sp_LietKeThongTinPhong`);
+export async function fetchThongTinPhong(): Promise<ThongTinPhong[]> {
+    const res = await pool.request().query<ThongTinPhong[]>(`
+            SELECT
+        P.MaPhong AS N'MaPhong',
+        LP.TenLP AS N'TenLP',
+        LP.Gia AS N'Gia',
+        P.TinhTrang AS N'TinhTrang',
+        -- Thông tin đặt phòng hiện tại (nếu có)
+        D.MaDP AS N'Mã Đặt Phòng Hiện Tại',
+        D.NgayDat AS N'NgayDat',
+        D.NgayNhan AS N'NgayNhan',
+        D.NgayTra AS N'NgayTra'
+    FROM
+        PHONG AS P
+    JOIN
+        LOAIPHONG AS LP ON P.MaLP = LP.MaLP
+    LEFT JOIN
+        DATPHONG AS D ON P.MaPhong = D.MaPhong
+                      AND GETDATE() BETWEEN D.NgayNhan AND D.NgayTra
+    ORDER BY
+        P.MaPhong;
+            `);
+
     const data = res.recordset.map((phong) => {
         if (
             !(phong.TinhTrang === "reserved" || phong.TinhTrang === "occupied")
@@ -38,13 +59,29 @@ export async function fetchPhong(): Promise<ThongKePhong[]> {
     return data;
 }
 
-export async function fetchPhongDangSD(): Promise<DatPhong[]> {
-    const res = await pool.request().execute(`sp_LietKePhongDangSuDung`);
+export async function fetchPhongDangSD(): Promise<DATPHONG[]> {
+    const res = await pool.request().query(`
+        SELECT
+        DP.*
+    FROM
+        DATPHONG AS DP
+    JOIN
+        PHONG AS P ON DP.MaPhong = P.MaPhong
+    JOIN
+        LOAIPHONG AS LP ON P.MaLP = LP.MaLP
+    JOIN
+        NGUOIDUNG AS ND_KH ON DP.MaND_KhachHang = ND_KH.MaND 
+    JOIN
+        NGUOIDUNG AS ND_NV ON DP.MaND_NhanVien = ND_NV.MaND   
+    WHERE
+        GETDATE() BETWEEN DP.NgayNhan AND DP.NgayTra;
+        `);
     return res.recordset;
 }
 
-export async function fetchDichVu(): Promise<DichVu[]> {
-    const res = await pool.request().execute(`sp_LayDanhSachDichVu`);
+export async function fetchDichVu(): Promise<DICHVU[]> {
+    const res = await pool.request().query<DICHVU[]>(`SELECT *
+    FROM DICHVU;`);
     return res.recordset;
 }
 
@@ -54,12 +91,25 @@ interface ThongKe {
     SoLuong: number;
 }
 export async function fetchDatPhongTheoThang(): Promise<ThongKe[]> {
-    const res = await pool.request().execute(`sp_ThongKeDatPhongTheoThangNam`);
+    const res = await pool.request().query<ThongKe[]>(`SELECT 
+        YEAR(NgayDat) AS Nam,
+        MONTH(NgayDat) AS Thang,
+        COUNT(*) AS SoLuong
+    FROM DATPHONG
+    GROUP BY YEAR(NgayDat), MONTH(NgayDat)
+    ORDER BY Nam, Thang;
+`);
     return res.recordset;
 }
 
 export async function fetchDichVuTheoThang(): Promise<ThongKe[]> {
-    const res = await pool.request().execute(`sp_ThongKeSuDungDichVu`);
+    const res = await pool.request().query<ThongKe[]>(`SELECT 
+        YEAR(NSD) AS Nam,
+        MONTH(NSD) AS Thang,
+        COUNT(*) AS SoLuong
+    FROM SDDICHVU
+    GROUP BY YEAR(NSD), MONTH(NSD)
+    ORDER BY Nam, Thang;`);
     return res.recordset;
 }
 
@@ -102,9 +152,28 @@ interface LoaiPhong {
 }
 
 export async function fetchLoaiPhong(status: string): Promise<LoaiPhong[]> {
-    const res = await pool
-        .request()
-        .input("TinhTrang", sql.NVarChar(50), status)
-        .execute<LoaiPhong[]>(`sp_ThongKeLoaiPhongTheoTinhTrang`);
+    const res = await pool.request().input("TinhTrang", NVarChar(50), status)
+        .query(`SELECT
+        LP.TenLP AS N'TenLP',
+        COUNT(P.MaPhong) AS N'SoLuong'
+        FROM
+            PHONG AS P
+        INNER JOIN
+            LOAIPHONG AS LP ON P.MaLP = LP.MaLP
+        WHERE
+            P.TinhTrang = @TinhTrang
+        GROUP BY
+            LP.TenLP;`);
     return res.recordset;
 }
+
+export async function fetchDoanThuThang() {
+    const res = await pool.request().query(`
+        SELECT MONTH(NgayDat) AS Thang, YEAR(NgayDat) AS Nam, SUM(TongTien) AS DoanhThu
+        FROM DATPHONG
+        WHERE MONTH(NgayDat) = MONTH(GETDATE()) AND YEAR(NgayDat) = YEAR(GETDATE())
+        GROUP BY YEAR(NgayDat), MONTH(NgayDat);`);
+
+    return res.recordset[0]?.DoanhThu || 0;
+}
+

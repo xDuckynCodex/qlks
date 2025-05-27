@@ -15,20 +15,19 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { MoreHorizontal } from "lucide-react";
 import React from "react";
-import { ThongKePhong } from "./columns";
+import { ThongTinPhong } from "./columns";
+import FormDatPhong from "./form-datphong";
+import { RoomStatus } from "@/types";
 
 interface ActionsMenuProps {
-    phong: ThongKePhong;
+    phong: ThongTinPhong;
 }
 
 const ActionsMenu = ({ phong }: ActionsMenuProps) => {
-    const canCheckIn =
-        phong.TinhTrang === "available" || phong.TinhTrang === "reserved";
-    const canCheckOut = phong.TinhTrang === "occupied";
+    const canCheckIn = phong.TinhTrang === RoomStatus.Reserved;
+    const canCheckOut = phong.TinhTrang === RoomStatus.Occupied;
     return (
         <Dialog>
             {/* dropdown menu */}
@@ -42,10 +41,10 @@ const ActionsMenu = ({ phong }: ActionsMenuProps) => {
                 <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DialogTrigger asChild>
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
+                        <DropdownMenuItem>Đặt phòng</DropdownMenuItem>
                     </DialogTrigger>
                     <DropdownMenuItem
-                        disabled={!canCheckIn}
+                        disabled={canCheckIn}
                         onClick={() => {
                             // update check in
                             console.log("Update checkin");
@@ -54,7 +53,7 @@ const ActionsMenu = ({ phong }: ActionsMenuProps) => {
                         Update Checkin
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                        disabled={!canCheckOut}
+                        disabled={canCheckOut}
                         onClick={() => {
                             // update check out
                             console.log("Update checkout");
@@ -68,37 +67,14 @@ const ActionsMenu = ({ phong }: ActionsMenuProps) => {
 
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Update room </DialogTitle>
+                    <DialogTitle>Đặt phòng </DialogTitle>
                     <DialogDescription>
                         Add some infor for room
                     </DialogDescription>
                 </DialogHeader>
                 {/* form here */}
-                <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="name" className="text-right">
-                            Name
-                        </Label>
-                        <Input
-                            id="name"
-                            value={phong.MaPhong}
-                            className="col-span-3"
-                        />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="username" className="text-right">
-                            Username
-                        </Label>
-                        <Input
-                            id="username"
-                            value="@peduarte"
-                            className="col-span-3"
-                        />
-                    </div>
-                </div>
-                <DialogFooter>
-                    <Button type="submit">Save changes</Button>
-                </DialogFooter>
+                <FormDatPhong maPhong={phong.MaPhong} />
+                <DialogFooter></DialogFooter>
             </DialogContent>
         </Dialog>
     );

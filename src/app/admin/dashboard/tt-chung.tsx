@@ -5,8 +5,14 @@ interface BaoCaoChungProps {
     icon: React.ReactNode;
     value: number;
     title: string;
+    format?: boolean;
 }
-const BaoCaoChung = ({ value, icon, title }: BaoCaoChungProps) => {
+const BaoCaoChung = ({
+    value,
+    icon,
+    title,
+    format = false,
+}: BaoCaoChungProps) => {
     return (
         <Card className="">
             <CardHeader>
@@ -14,7 +20,14 @@ const BaoCaoChung = ({ value, icon, title }: BaoCaoChungProps) => {
                     {icon} {title}
                 </CardTitle>
             </CardHeader>
-            <CardContent>{value}</CardContent>
+            <CardContent>
+                {format
+                    ? new Intl.NumberFormat("vi-vn", {
+                          currency: "VND",
+                          style: "currency",
+                      }).format(value)
+                    : value}
+            </CardContent>
         </Card>
     );
 };
