@@ -25,6 +25,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { DatePickerWithRange } from "./range-date-picker";
 import { useToast } from "@/hooks/use-toast";
+import { insertDatPhong } from "@/lib/actions";
 
 const bookingSchema = z.object({
     roomType: z.string().min(1, "Room type is required"),
@@ -32,10 +33,11 @@ const bookingSchema = z.object({
         from: z.date(),
         to: z.date(),
     }),
-    numberOfGuests: z.coerce
-        .number()
-        .min(1, "Number of guests is required")
-        .max(10, "Maximum 10 guests allowed"),
+    name: z.string().min(1, "Name is required"),
+    email: z.string().email("Invalid email address"),
+    cccd: z.string().min(12, "CCCD is required"),
+    phone: z.string().min(10, "Phone number is required"),
+    address: z.string().min(1, "Address is required"),
 });
 
 export type BookingFormData = z.infer<typeof bookingSchema>;
@@ -57,7 +59,11 @@ const DatPhongForm = ({ roomType }: DatPhongFormProps) => {
                 from: new Date(),
                 to: addDays(new Date(), 3),
             },
-            numberOfGuests: 1,
+            name: "",
+            email: "",
+            cccd: "",
+            phone: "",
+            address: "",
         },
     });
 
@@ -65,9 +71,12 @@ const DatPhongForm = ({ roomType }: DatPhongFormProps) => {
         console.log("Booking data:", data);
         // Handle booking logic here
 
+        const res = await insertDatPhong(data);
+
+        console.log(res.recordset);
         toast({
             title: "Đã đặt phòng thành công",
-            description: `Đã đặt phòng thành công `,
+            description: `Mã đặt phòng là ${res.recordset[0].MaDP}`,
         });
     };
     return (
@@ -131,70 +140,89 @@ const DatPhongForm = ({ roomType }: DatPhongFormProps) => {
                             )}
                         />
 
-                        {/* <FormField
-                            control={form.control}
-                            name="checkInDate"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-col">
-                                    <FormLabel>Date of birth</FormLabel>
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                            <FormControl>
-                                                <Button
-                                                    variant={"outline"}
-                                                    className={cn(
-                                                        "w-[240px] pl-3 text-left font-normal",
-                                                        !field.value &&
-                                                            "text-muted-foreground"
-                                                    )}
-                                                >
-                                                    {field.value ? (
-                                                        format(
-                                                            field.value,
-                                                            "PPP"
-                                                        )
-                                                    ) : (
-                                                        <span>Pick a date</span>
-                                                    )}
-                                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                </Button>
-                                            </FormControl>
-                                        </PopoverTrigger>
-                                        <PopoverContent
-                                            className="w-auto p-0"
-                                            align="start"
-                                        >
-                                            <Calendar
-                                                mode="single"
-                                                selected={field.value}
-                                                onSelect={field.onChange}
-                                                disabled={(date) =>
-                                                    date > new Date() ||
-                                                    date <
-                                                        new Date("1900-01-01")
-                                                }
-                                                initialFocus
-                                            />
-                                        </PopoverContent>
-                                    </Popover>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        /> */}
-
                         <FormField
                             control={form.control}
-                            name="numberOfGuests"
+                            name="name"
                             render={({ field }) => (
                                 <FormItem className="flex flex-col">
                                     <Label className="text-sm font-medium">
-                                        Số lượng người
+                                        Họ tên
+                                    </Label>
+                                    <Input
+                                        type="text"
+                                        {...field}
+                                        className="border rounded p-2"
+                                    />
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="email"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                    <Label className="text-sm font-medium">
+                                        Email
+                                    </Label>
+                                    <Input
+                                        type="email"
+                                        {...field}
+                                        className="border rounded p-2"
+                                    />
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="cccd"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                    <Label className="text-sm font-medium">
+                                        CCCD
+                                    </Label>
+                                    <Input
+                                        type="text"
+                                        {...field}
+                                        className="border rounded p-2"
+                                    />
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="phone"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                    <Label className="text-sm font-medium">
+                                        SDT
                                     </Label>
                                     <Input
                                         type="number"
                                         {...field}
                                         className="border rounded p-2"
                                     />
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="address"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                    <Label className="text-sm font-medium">
+                                        SDT
+                                    </Label>
+                                    <Input
+                                        type="text"
+                                        {...field}
+                                        className="border rounded p-2"
+                                    />
+                                    <FormMessage />
                                 </FormItem>
                             )}
                         />

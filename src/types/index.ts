@@ -34,9 +34,10 @@ export interface DatPhong {
     MaKH: string;
     MaNV: string;
     MaPhong: string;
-    NgayDat: string; // date
-    NgayNhan: string; // date
-    NgayTra: string; // date
+    NgayDat: string | Date; // date
+    NgayNhan: string | Date; // date
+    NgayTra: string | Date; // date
+    TongTien: number;
     TienCoc: number;
 }
 

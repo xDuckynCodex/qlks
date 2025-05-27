@@ -8,13 +8,20 @@ interface BaoCaoChungProps {
 }
 const BaoCaoChung = ({ value, icon, title }: BaoCaoChungProps) => {
     return (
-        <Card className="">
+        <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     {icon} {title}
                 </CardTitle>
             </CardHeader>
-            <CardContent>{value}</CardContent>
+            <CardContent>
+                {title === "Doanh thu"
+                    ? new Intl.NumberFormat("vi-VN", {
+                          style: "currency",
+                          currency: "VND",
+                      }).format(value)
+                    : value}
+            </CardContent>
         </Card>
     );
 };

@@ -59,6 +59,10 @@ export function DatePickerWithRange({
                         selected={field.value}
                         onSelect={field.onChange}
                         numberOfMonths={2}
+                        disabled={{
+                            before: new Date(),
+                        }}
+                        excludeDisabled={true}
                     />
                 </PopoverContent>
             </Popover>

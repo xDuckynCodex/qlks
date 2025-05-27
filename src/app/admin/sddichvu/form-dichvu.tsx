@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { TimMaDP } from "./tim-madp";
 import { DichVu } from "@/types";
 import { toast } from "@/hooks/use-toast";
-import { getSP } from "@/lib/actions";
+import { insertSDDV } from "@/lib/actions";
 
 const formSchema = z.object({
     MaDP: z.string().min(1, { message: "Mã đặt phòng không được để trống" }),
@@ -31,7 +31,7 @@ const formSchema = z.object({
         .min(new Date(), { message: "Ngày sử dụng không được để trống" }),
 });
 
-type FormData = z.infer<typeof formSchema>;
+export type SDDVFormData = z.infer<typeof formSchema>;
 
 interface IDangKyDichVu {
     maDP: string[];
@@ -48,7 +48,7 @@ const DangKyDichVu = ({ maDP, dichVu }: IDangKyDichVu) => {
         label: item.TenDV,
     }));
 
-    const form = useForm<FormData>({
+    const form = useForm<SDDVFormData>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             MaDP: "",
@@ -58,15 +58,15 @@ const DangKyDichVu = ({ maDP, dichVu }: IDangKyDichVu) => {
         },
     });
 
-    const onSubmit = async (data: FormData) => {
+    const onSubmit = async (data: SDDVFormData) => {
         // Handle form submission
         // server action
-        const res = await getSP();
-        console.log(res);
+        const res = await insertSDDV(data);
+
         console.log(data);
         toast({
             title: "Đăng ký dịch vụ thành công",
-            description: `Đã đăng ký dịch vụ ${data.MaDV} cho mã đặt phòng ${data.MaDP}`,
+            description: `Đã đăng ký dịch vụ ${res.recordset[0].MaDV} cho mã đặt phòng ${res.recordset[0].MaDP}`,
         });
     };
 
@@ -77,13 +77,13 @@ const DangKyDichVu = ({ maDP, dichVu }: IDangKyDichVu) => {
                 className="flex w-full flex-col justify-end space-y-4"
             >
                 <div className="flex gap-4">
-                    <TimMaDP<FormData>
+                    <TimMaDP<SDDVFormData>
                         name={`MaDP`}
                         label="Ma Dat phong"
                         form={form}
                         Ids={DPIds}
                     />
-                    <TimMaDP<FormData>
+                    <TimMaDP<SDDVFormData>
                         name={`MaDV`}
                         label="Ma Dich vu"
                         form={form}

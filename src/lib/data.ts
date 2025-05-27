@@ -95,6 +95,79 @@ export async function fetchBieuDo() {
     );
 }
 
+export async function fetchDoanhThu() {
+    const res = await pool
+        .request()
+        .input("Thang", sql.Int, new Date().getMonth() + 1)
+        .input("Nam", sql.Int, new Date().getFullYear()).query<{
+        Thang: number;
+        Nam: number;
+        DoanhSo: number;
+    }>(`SELECT month(NgayDat) as Thang, year(NgayDat) as Nam,  SUM(TongTien) as DoanhSo
+            FROM DATPHONG
+            WHERE MONTH(NgayDat) = @Thang and YEAR(NgayDat) = @Nam
+            group by month(NgayDat), year(NgayDat)`);
+
+    return res.recordset[0];
+}
+
+export async function fetchSoLuotDatPhong() {
+    const res = await pool
+        .request()
+        .input("Thang", sql.Int, new Date().getMonth() + 1)
+        .input("Nam", sql.Int, new Date().getFullYear()).query<{
+        Thang: number;
+        Nam: number;
+        SoLuotDatPhong: number;
+    }>(`SELECT month(NgayDat) as Thang, year(NgayDat) as Nam,  COUNT(*) as SoLuotDatPhong
+            FROM DATPHONG
+            WHERE MONTH(NgayDat) = @Thang and YEAR(NgayDat) = @Nam
+            group by month(NgayDat), year(NgayDat)`);
+
+    return res.recordset[0];
+}
+
+export async function fetchSoLuotSDDV() {
+    const res = await pool
+        .request()
+        .input("Thang", sql.Int, new Date().getMonth() + 1)
+        .input("Nam", sql.Int, new Date().getFullYear()).query<{
+        Thang: number;
+        Nam: number;
+        SoLuongSDDV: number;
+    }>(`select month(NSD) as Thang, year(NSD) as Nam, count(*) as SoLuongSDDV
+        from SDDICHVU
+        WHERE MONTH(NSD) = @Thang and YEAR(NSD) = @Nam
+        group by month(NSD), year(NSD)`);
+
+    return res.recordset[0];
+}
+
+export async function fetchBaoCao() {
+    const doanhThu = await fetchDoanhThu();
+    const soLuotDatPhong = await fetchSoLuotDatPhong();
+    const soLuotSDDV = await fetchSoLuotSDDV();
+
+    return [
+        {
+            label: "Doanh thu",
+            value: doanhThu.DoanhSo,
+        },
+        {
+            label: "Số lượt đặt phòng",
+            value: soLuotDatPhong.SoLuotDatPhong,
+        },
+        {
+            label: "Số lượt sử dụng dịch vụ",
+            value: soLuotSDDV.SoLuongSDDV,
+        },
+        {
+            label: "Đánh giá",
+            value: 4.5,
+        },
+    ];
+}
+
 interface LoaiPhong {
     MaLP: string;
     TenLP: string;
