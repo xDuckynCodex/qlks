@@ -33,12 +33,11 @@ const Page = async () => {
         },
     ];
 
-    // const dataBaoCao = await
     return (
         <div className="flex flex-col w-full space-y-4">
             <p className="text-2xl font-bold">Dashboard</p>
             <div className="w-full grid grid-cols-4 gap-4">
-                {dataBaoCao.map((item, index) => (
+                {baoCao.map((item, index) => (
                     <BaoCaoChung
                         key={index}
                         value={item.value}

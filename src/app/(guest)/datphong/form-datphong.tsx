@@ -26,6 +26,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const loaiPhong = ["single", "double", "suite", "family", "vip"];
 
@@ -44,13 +45,22 @@ const khachHangDatPhongSchema = z.object({
 export type KhachHangDatPhongType = z.infer<typeof khachHangDatPhongSchema>;
 // type LoaiPhong = "single" | "double" | "suite" | "family" | "vip";
 
+export type NgayDaDuocDat = {
+    Ngay: Date;
+}[];
+
 interface DatPhongFormProps {
     roomType: string;
+    reservedDates: NgayDaDuocDat;
 }
 
-const KhachHangDatPhongForm = ({ roomType }: DatPhongFormProps) => {
+const KhachHangDatPhongForm = ({
+    roomType,
+    reservedDates,
+}: DatPhongFormProps) => {
     const { toast } = useToast();
-
+    const router = useRouter();
+    const searchParams = useSearchParams();
     const form = useForm<KhachHangDatPhongType>({
         resolver: zodResolver(khachHangDatPhongSchema),
         defaultValues: {
@@ -152,7 +162,10 @@ const KhachHangDatPhongForm = ({ roomType }: DatPhongFormProps) => {
                                         Loại phòng
                                     </FormLabel>
                                     <Select
-                                        onValueChange={field.onChange}
+                                        onValueChange={(e) => {
+                                            field.onChange(e);
+                                            router.push(`/datphong?type=${e}`);
+                                        }}
                                         defaultValue={field.value}
                                     >
                                         <FormControl>
@@ -183,6 +196,7 @@ const KhachHangDatPhongForm = ({ roomType }: DatPhongFormProps) => {
                                     <FormLabel>Thời gian lưu trú</FormLabel>
                                     <FormControl>
                                         <DatePickerWithRange
+                                            reservedDates={reservedDates}
                                             field={field.field}
                                         />
                                     </FormControl>

@@ -35,7 +35,7 @@ const Header = async () => {
                         <Button
                             variant="link"
                             asChild
-                            disabled={session.user.role === UserRole.Customer}
+                            disabled={session.user.role === UserRole.customer}
                         >
                             <Link href="/admin/dashboard">
                                 {session.user.name}

@@ -7,7 +7,7 @@ import ClientDate from "./client-date";
 
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
-export type ThongTinPhong = {
+export type ThongTinDatPhong = {
     MaPhong: string;
     TenLP: "single" | "double" | "suite" | "family" | "vip";
     Gia: number;
@@ -15,6 +15,7 @@ export type ThongTinPhong = {
     NgayDat: string;
     NgayNhan: string;
     NgayTra: string;
+    NgayDaDat: string;
 };
 
 type statusType =
@@ -25,7 +26,7 @@ type statusType =
     | "reserved";
 
 // Dinh nghia cac cot cua bang
-export const columns: ColumnDef<ThongTinPhong>[] = [
+export const columns: ColumnDef<ThongTinDatPhong>[] = [
     {
         id: "No.",
         header: () => <div className="text-center">No.</div>,
@@ -38,7 +39,7 @@ export const columns: ColumnDef<ThongTinPhong>[] = [
         accessorKey: "MaPhong",
         header: () => <div className="text-center">Room ID</div>,
         cell: ({ row }) => {
-            const roomId: ThongTinPhong["MaPhong"] = row.getValue("MaPhong");
+            const roomId: ThongTinDatPhong["MaPhong"] = row.getValue("MaPhong");
             return <div className="text-center">{roomId}</div>;
         },
     },
@@ -46,7 +47,7 @@ export const columns: ColumnDef<ThongTinPhong>[] = [
         accessorKey: "TenLP",
         header: () => <div className="text-center">Room Type</div>,
         cell: ({ row }) => {
-            const roomType: ThongTinPhong["TenLP"] = row.getValue("TenLP");
+            const roomType: ThongTinDatPhong["TenLP"] = row.getValue("TenLP");
 
             return <div className="text-center">{roomType}</div>;
         },

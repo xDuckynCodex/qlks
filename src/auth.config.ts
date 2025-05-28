@@ -36,7 +36,7 @@ export const authConfig = {
             const pathname = request.nextUrl.pathname;
             // Kiểm tra xem người dùng có quyền truy cập vào trang này không
             if (pathname.startsWith("/admin")) {
-                if (user?.role === UserRole.Customer) {
+                if (user?.role === UserRole.customer) {
                     return NextResponse.redirect(
                         new URL("/", request.nextUrl.origin)
                     ); // Chỉ admin mới có quyền truy cập vào trang /admin

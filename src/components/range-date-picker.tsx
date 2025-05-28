@@ -13,15 +13,18 @@ import {
 } from "@/components/ui/popover";
 import { ControllerRenderProps } from "react-hook-form";
 import { format } from "date-fns";
+import { NgayDaDuocDat } from "@/app/(guest)/datphong/form-datphong";
 
 interface DatePickerWithRangeProps<T extends Record<string, any>>
     extends React.HTMLAttributes<HTMLDivElement> {
     field: ControllerRenderProps<T, "date">;
+    reservedDates: NgayDaDuocDat;
 }
 
 export function DatePickerWithRange<FType extends Record<string, any>>({
     className,
     field,
+    reservedDates,
 }: DatePickerWithRangeProps<FType>) {
     return (
         <div className={cn("grid gap-2", className)}>
@@ -59,8 +62,8 @@ export function DatePickerWithRange<FType extends Record<string, any>>({
                         onSelect={field.onChange}
                         numberOfMonths={2}
                         disabled={[
+                            ...reservedDates.map((date) => new Date(date.Ngay)),
                             { before: new Date() },
-                            new Date(2025, 5, 30),
                         ]}
                     />
                 </PopoverContent>

@@ -17,17 +17,27 @@ import {
 } from "@/components/ui/dialog";
 import { MoreHorizontal } from "lucide-react";
 import React from "react";
-import { ThongTinPhong } from "./columns";
+import { ThongTinDatPhong } from "./columns";
 import FormDatPhong from "./form-datphong";
 import { RoomStatus } from "@/types";
+import { fetchNgayDaDuocDatTheoMaPhong } from "@/lib/data";
+import { NgayDaDuocDat } from "@/app/(guest)/datphong/form-datphong";
 
 interface ActionsMenuProps {
-    phong: ThongTinPhong;
+    phong: ThongTinDatPhong;
 }
 
 const ActionsMenu = ({ phong }: ActionsMenuProps) => {
-    const canCheckIn = phong.TinhTrang === RoomStatus.Reserved;
-    const canCheckOut = phong.TinhTrang === RoomStatus.Occupied;
+    const canCheckIn = phong.TinhTrang === RoomStatus.reserved;
+    const canCheckOut = phong.TinhTrang === RoomStatus.occupied;
+
+    const reservedDates: NgayDaDuocDat = phong.NgayDaDat.split(",").map(
+        (date) => {
+            return {
+                Ngay: new Date(date),
+            };
+        }
+    );
     return (
         <Dialog>
             {/* dropdown menu */}
@@ -73,7 +83,10 @@ const ActionsMenu = ({ phong }: ActionsMenuProps) => {
                     </DialogDescription>
                 </DialogHeader>
                 {/* form here */}
-                <FormDatPhong maPhong={phong.MaPhong} />
+                <FormDatPhong
+                    reservedDates={reservedDates}
+                    maPhong={phong.MaPhong}
+                />
                 <DialogFooter></DialogFooter>
             </DialogContent>
         </Dialog>

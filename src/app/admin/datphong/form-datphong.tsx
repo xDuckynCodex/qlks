@@ -1,3 +1,6 @@
+"use client";
+
+import { NgayDaDuocDat } from "@/app/(guest)/datphong/form-datphong";
 import { DatePickerWithRange } from "@/components/range-date-picker";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,9 +36,10 @@ export type FormDatPhongSchemaType = z.infer<typeof FormDatPhongSchema>;
 
 interface FormDatPhongProps {
     maPhong: string;
+    reservedDates: NgayDaDuocDat;
 }
 
-const FormDatPhong = ({ maPhong }: FormDatPhongProps) => {
+const FormDatPhong = ({ maPhong, reservedDates }: FormDatPhongProps) => {
     const { toast } = useToast();
     const form = useForm<FormDatPhongSchemaType>({
         resolver: zodResolver(FormDatPhongSchema),
@@ -47,7 +51,7 @@ const FormDatPhong = ({ maPhong }: FormDatPhongProps) => {
             Email: "",
             date: {
                 from: new Date(),
-                to: addDays(new Date(), 3),
+                to: addDays(new Date(), 0),
             },
         },
     });
@@ -137,7 +141,10 @@ const FormDatPhong = ({ maPhong }: FormDatPhongProps) => {
                             <FormItem>
                                 <FormLabel>Thời gian lưu trú</FormLabel>
                                 <FormControl>
-                                    <DatePickerWithRange field={field.field} />
+                                    <DatePickerWithRange
+                                        reservedDates={reservedDates}
+                                        field={field.field}
+                                    />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>

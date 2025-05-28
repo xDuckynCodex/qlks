@@ -1,9 +1,9 @@
 "use server";
-import { NVarChar } from "mssql";
+import sql from "mssql";
 import bcrypt from "bcrypt";
 import { pool } from "./db";
-import { ThongTinPhong } from "@/app/admin/datphong/columns";
-import { DATPHONG, DICHVU, NGUOIDUNG } from "@/types";
+import { ThongTinDatPhong } from "@/app/admin/datphong/columns";
+import { DATPHONG, DICHVU, NGUOIDUNG, PHONG, TenLP } from "@/types";
 
 export async function fetchNguoiDung(
     username: string,
@@ -23,28 +23,44 @@ export async function fetchNguoiDung(
     return res.recordset[0];
 }
 
-export async function fetchThongTinPhong(): Promise<ThongTinPhong[]> {
-    const res = await pool.request().query<ThongTinPhong[]>(`
-            SELECT
-        P.MaPhong AS N'MaPhong',
-        LP.TenLP AS N'TenLP',
-        LP.Gia AS N'Gia',
-        P.TinhTrang AS N'TinhTrang',
-        -- Thông tin đặt phòng hiện tại (nếu có)
-        D.MaDP AS N'Mã Đặt Phòng Hiện Tại',
-        D.NgayDat AS N'NgayDat',
-        D.NgayNhan AS N'NgayNhan',
-        D.NgayTra AS N'NgayTra'
-    FROM
-        PHONG AS P
-    JOIN
-        LOAIPHONG AS LP ON P.MaLP = LP.MaLP
-    LEFT JOIN
-        DATPHONG AS D ON P.MaPhong = D.MaPhong
-                      AND GETDATE() BETWEEN D.NgayNhan AND D.NgayTra
-    ORDER BY
-        P.MaPhong;
-            `);
+export async function fetchThongTinDatPhong(): Promise<ThongTinDatPhong[]> {
+    const res = await pool.request().query<ThongTinDatPhong[]>(`
+        WITH Numbers AS (
+            SELECT TOP (1000) ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) - 1 AS Num
+            FROM sys.all_objects
+        ),
+        NgayDaDat AS (
+            SELECT 
+                DP.MaPhong,
+                DATEADD(DAY, N.Num, DP.NgayNhan) AS Ngay
+            FROM DATPHONG DP
+            JOIN Numbers N 
+                ON DATEADD(DAY, N.Num, DP.NgayNhan) < DP.NgayTra
+            WHERE DATEADD(DAY, N.Num, DP.NgayNhan) > CAST(GETDATE() AS DATE) -- chỉ lấy ngày tương lai
+        )
+        SELECT
+            P.MaPhong AS 'MaPhong',
+            LP.TenLP AS 'TenLP',
+            LP.Gia AS 'Gia',
+            P.TinhTrang AS 'TinhTrang',
+            D.NgayDat AS 'NgayDat',
+            D.NgayNhan AS 'NgayNhan',
+            D.NgayTra AS 'NgayTra',
+            ISNULL(STRING_AGG(CONVERT(VARCHAR(10), ND.Ngay, 23), ', '), '') AS NgayDaDat
+        FROM
+            PHONG AS P
+        JOIN
+            LOAIPHONG AS LP ON P.MaLP = LP.MaLP
+        LEFT JOIN
+            DATPHONG AS D ON P.MaPhong = D.MaPhong
+            AND GETDATE() BETWEEN D.NgayNhan AND D.NgayTra
+        LEFT JOIN
+            NgayDaDat AS ND ON P.MaPhong = ND.MaPhong
+        GROUP BY
+            P.MaPhong, LP.TenLP, LP.Gia, P.TinhTrang, D.NgayDat, D.NgayNhan, D.NgayTra
+        ORDER BY
+            P.MaPhong;
+    `);
 
     const data = res.recordset.map((phong) => {
         if (
@@ -225,8 +241,9 @@ interface LoaiPhong {
 }
 
 export async function fetchLoaiPhong(status: string): Promise<LoaiPhong[]> {
-    const res = await pool.request().input("TinhTrang", NVarChar(50), status)
-        .query(`SELECT
+    const res = await pool
+        .request()
+        .input("TinhTrang", sql.NVarChar(50), status).query(`SELECT
         LP.TenLP AS N'TenLP',
         COUNT(P.MaPhong) AS N'SoLuong'
         FROM
@@ -250,4 +267,53 @@ export async function fetchDoanThuThang() {
     return res.recordset[0]?.DoanhThu || 0;
 }
 
-// export async function 
+export async function fetchNgayDaDuocDatTheoLoaiPhong(TenLP: TenLP) {
+    const res = await pool.request().input("TenLP", sql.NVarChar(50), TenLP)
+        .query<{ Ngay: Date }[]>(`
+        WITH DATPHONG_LOAIPHONG AS (
+            SELECT DP.NgayNhan, DP.NgayTra
+            FROM DATPHONG DP
+            JOIN PHONG P ON DP.MaPhong = P.MaPhong
+            JOIN LOAIPHONG LP ON P.MaLP = LP.MaLP
+            WHERE LP.TenLP = @TenLP
+        ),
+        Numbers AS (
+            SELECT TOP (1000) ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) - 1 AS Num
+            FROM sys.all_objects -- đủ lớn để sinh dãy số
+        ),
+        BookedDates AS (
+            SELECT DATEADD(DAY, N.Num, D.NgayNhan) AS Ngay
+            FROM DATPHONG_LOAIPHONG D
+            JOIN Numbers N ON DATEADD(DAY, N.Num, D.NgayNhan) < D.NgayTra
+        )
+        SELECT DISTINCT Ngay
+        FROM BookedDates
+        ORDER BY Ngay;
+    `);
+
+    return res.recordset;
+}
+
+export async function fetchNgayDaDuocDatTheoMaPhong(MaPhong: PHONG["MaPhong"]) {
+    const res = await pool.request().input("MaPhong", sql.NVarChar(50), MaPhong)
+        .query<{ Ngay: Date }[]>(`
+        WITH Numbers AS (
+            SELECT TOP (1000) ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) - 1 AS Num
+            FROM sys.all_objects
+        ),
+        NgayDaDat AS (
+            SELECT 
+                DATEADD(DAY, N.Num, DP.NgayNhan) AS Ngay
+            FROM DATPHONG DP
+            JOIN Numbers N 
+                ON DATEADD(DAY, N.Num, DP.NgayNhan) < DP.NgayTra
+            WHERE DP.MaPhong = @MaPhong
+        )
+        SELECT DISTINCT Ngay
+        FROM NgayDaDat
+        ORDER BY Ngay;
+
+    `);
+
+    return res.recordset;
+}

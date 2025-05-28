@@ -60,7 +60,7 @@ export const datPhongQuaNhanVien = async (data: FormDatPhongSchemaType) => {
         .input("CCCD", data.CCCD)
         .input("Email", data.Email)
         .input("DiaChi", generateRandomLetters(60))
-        .input("ChucVu", UserRole.Customer).query<NGUOIDUNG>(`
+        .input("ChucVu", UserRole.customer).query<NGUOIDUNG>(`
             INSERT INTO NGUOIDUNG (MaND, HoTen, SDT, CCCD, Email, DiaChi, ChucVu)
             OUTPUT INSERTED.*
             VALUES (@MaND, @HoTen, @SDT, @CCCD, @Email, @DiaChi, @ChucVu);   

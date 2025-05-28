@@ -1,26 +1,26 @@
 // Enums
 export enum TenLP {
-    Single = "single",
-    Double = "double",
-    Suite = "suite",
-    Family = "family",
-    Vip = "vip",
+    single = "single",
+    double = "double",
+    suite = "suite",
+    family = "family",
+    vip = "vip",
 }
 
 export enum RoomStatus {
-    Available = "available",
-    Reserved = "reserved",
-    Occupied = "occupied",
-    Cleaning = "cleaning",
-    Maintenance = "maintenance",
+    available = "available",
+    reserved = "reserved",
+    occupied = "occupied",
+    cleaning = "cleaning",
+    maintenance = "maintenance",
 }
 
 export enum UserRole {
-    Customer = "customer",
-    Receptionist = "receptionist",
-    Housekeeper = "housekeeper",
-    ServiceManager = "serviceManager",
-    Administrator = "administrator",
+    customer = "customer",
+    receptionist = "receptionist",
+    housekeeper = "housekeeper",
+    serviceManager = "serviceManager",
+    administrator = "administrator",
 }
 
 // Interfaces
