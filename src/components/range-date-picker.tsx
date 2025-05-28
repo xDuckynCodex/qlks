@@ -58,6 +58,10 @@ export function DatePickerWithRange<FType extends Record<string, any>>({
                         selected={field.value}
                         onSelect={field.onChange}
                         numberOfMonths={2}
+                        disabled={[
+                            { before: new Date() },
+                            new Date(2025, 5, 30),
+                        ]}
                     />
                 </PopoverContent>
             </Popover>

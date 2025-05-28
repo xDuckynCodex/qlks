@@ -6,6 +6,7 @@ import { pool } from "./db";
 import { DATPHONG, NGUOIDUNG, UserRole } from "@/types";
 import { generateRandomLetters } from "./utils";
 import { differenceInDays } from "date-fns";
+import { KhachHangDatPhongType } from "@/app/(guest)/datphong/form-datphong";
 // import { pool } from "./db";
 
 export const getSP = async () => {
@@ -51,8 +52,6 @@ export const logout = async () => {
 export const datPhongQuaNhanVien = async (data: FormDatPhongSchemaType) => {
     const session = await auth();
 
-    console.log(session);
-
     const user = await pool
         .request()
         .input("MaND", generateRandomLetters())
@@ -91,6 +90,52 @@ export const datPhongQuaNhanVien = async (data: FormDatPhongSchemaType) => {
             OUTPUT INSERTED.*
             VALUES (@MaDP, @MaPhong, @MaND_KhachHang, @MaND_NhanVien, @NgayDat, @NgayNhan, @NgayTra, @TongTien, @TienCoc);
         `);
+
+    return res.recordset[0];
+};
+
+export const datPhongQuaKhachHang = async (data: KhachHangDatPhongType) => {
+    const session = await auth();
+
+    // Lay ma phong tu loai phong
+    const phong = await pool
+        .request()
+        .input("TenLP", data.TenLP)
+        .input("NgayNhan", data.date.from)
+        .input("NgayTra", data.date.to).query<{
+        MaPhong: string;
+        Gia: number;
+    }>(`
+        SELECT TOP 1 P.MaPhong, LP.Gia
+        FROM PHONG AS P
+        JOIN LOAIPHONG AS LP ON P.MaLP = LP.MaLP
+        WHERE LP.TenLP = @TenLP
+        AND P.MaPhong NOT IN (
+            SELECT D.MaPhong
+            FROM DATPHONG AS D
+            WHERE (D.NgayNhan <= @NgayTra AND D.NgayTra >= @NgayNhan)
+        );
+    `);
+
+    const tongTien =
+        differenceInDays(data.date.to, data.date.from) * phong.recordset[0].Gia;
+
+    const randomNhanVien = "ND0" + Math.floor(Math.random() + 16).toString();
+
+    const res = await pool
+        .request()
+        .input("MaDP", generateRandomLetters())
+        .input("MaPhong", phong.recordset[0].MaPhong)
+        .input("MaND_KhachHang", session?.user?.id)
+        .input("MaND_NhanVien", randomNhanVien)
+        .input("NgayNhan", data.date.from)
+        .input("NgayTra", data.date.to)
+        .input("TongTien", tongTien)
+        .input("TienCoc", tongTien * 0.3).query<DATPHONG>(`
+            INSERT INTO DATPHONG (MaDP, MaPhong, MaND_KhachHang, MaND_NhanVien, NgayDat, NgayNhan, NgayTra, TongTien, TienCoc)
+            OUTPUT INSERTED.*
+            VALUES (@MaDP, @MaPhong, @MaND_KhachHang, @MaND_NhanVien, GETDATE(), @NgayNhan, @NgayTra, @TongTien, @TienCoc);
+    `);
 
     return res.recordset[0];
 };

@@ -10,14 +10,7 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { addDays } from "date-fns";
 import React from "react";
@@ -25,49 +18,63 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { DatePickerWithRange } from "../../../components/range-date-picker";
 import { useToast } from "@/hooks/use-toast";
+import { datPhongQuaKhachHang } from "@/lib/actions";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
-const bookingSchema = z.object({
-    roomType: z.string().min(1, "Room type is required"),
+const loaiPhong = ["single", "double", "suite", "family", "vip"];
+
+const khachHangDatPhongSchema = z.object({
+    HoTen: z.string().min(1, "Mã phòng không được để trống"),
+    TenLP: z.string().min(1, "Mã phòng không được để trống"),
+    SDT: z.coerce.string().length(10, "Ngày đặt không được để trống"),
+    CCCD: z.string().length(12, "Ngày nhận không được để trống"),
+    Email: z.string().email("Email không hợp lệ"),
     date: z.object({
         from: z.date(),
         to: z.date(),
     }),
-    numberOfGuests: z.coerce
-        .number()
-        .min(1, "Number of guests is required")
-        .max(10, "Maximum 10 guests allowed"),
 });
 
-export type BookingFormData = z.infer<typeof bookingSchema>;
+export type KhachHangDatPhongType = z.infer<typeof khachHangDatPhongSchema>;
 // type LoaiPhong = "single" | "double" | "suite" | "family" | "vip";
 
-const loaiPhong = ["single", "double", "suite", "family", "vip"];
 interface DatPhongFormProps {
     roomType: string;
 }
 
-const DatPhongForm = ({ roomType }: DatPhongFormProps) => {
+const KhachHangDatPhongForm = ({ roomType }: DatPhongFormProps) => {
     const { toast } = useToast();
 
-    const form = useForm<BookingFormData>({
-        resolver: zodResolver(bookingSchema),
+    const form = useForm<KhachHangDatPhongType>({
+        resolver: zodResolver(khachHangDatPhongSchema),
         defaultValues: {
-            roomType: roomType,
+            HoTen: "",
+            TenLP: roomType,
+            SDT: "",
+            CCCD: "",
+            Email: "",
             date: {
                 from: new Date(),
                 to: addDays(new Date(), 3),
             },
-            numberOfGuests: 1,
         },
     });
 
-    const onSubmit = async (data: BookingFormData) => {
+    const onSubmit = async (data: KhachHangDatPhongType) => {
         console.log("Booking data:", data);
         // Handle booking logic here
 
+        const res = await datPhongQuaKhachHang(data);
+
         toast({
             title: "Đã đặt phòng thành công",
-            description: `Đã đặt phòng thành công `,
+            description: `Mã đặt phòng ${res.MaDP}`,
         });
     };
     return (
@@ -78,43 +85,96 @@ const DatPhongForm = ({ roomType }: DatPhongFormProps) => {
                     <div className="w-full flex flex-col space-y-4">
                         <FormField
                             control={form.control}
-                            name="roomType"
+                            name="HoTen"
                             render={({ field }) => (
-                                <FormItem className="flex flex-col">
-                                    <FormLabel className="text-sm font-medium">
+                                <FormItem>
+                                    <FormLabel className="block text-sm font-medium">
+                                        HoTen
+                                    </FormLabel>
+                                    <FormControl>
+                                        <Input {...field} type="text" />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="SDT"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="block text-sm font-medium">
+                                        SDT
+                                    </FormLabel>
+                                    <FormControl>
+                                        <Input {...field} type="text" />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="CCCD"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="block text-sm font-medium">
+                                        CCCD
+                                    </FormLabel>
+                                    <FormControl>
+                                        <Input {...field} type="text" />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="Email"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="block text-sm font-medium">
+                                        Email
+                                    </FormLabel>
+                                    <FormControl>
+                                        <Input {...field} type="text" />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="TenLP"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="block text-sm font-medium">
                                         Loại phòng
                                     </FormLabel>
                                     <Select
                                         onValueChange={field.onChange}
                                         defaultValue={field.value}
                                     >
-                                        <FormControl className="w-full">
+                                        <FormControl>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Chọn loại phòng bạn muốn lưu trú" />
+                                                <SelectValue placeholder="Chọn loại phòng" />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {loaiPhong.map((item) => (
-                                                <SelectItem
-                                                    value={item}
-                                                    key={item}
-                                                >
-                                                    {`${
-                                                        item
-                                                            .slice(0, 1)
-                                                            .toUpperCase() +
-                                                        item.slice(1)
-                                                    }`}
+                                            {loaiPhong.map((lp) => (
+                                                <SelectItem key={lp} value={lp}>
+                                                    {lp
+                                                        .slice(0, 1)
+                                                        .toUpperCase() +
+                                                        lp.slice(1)}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
-
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
-
                         <FormField
                             control={form.control}
                             name="date"
@@ -130,30 +190,14 @@ const DatPhongForm = ({ roomType }: DatPhongFormProps) => {
                                 </FormItem>
                             )}
                         />
-                        <FormField
-                            control={form.control}
-                            name="numberOfGuests"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-col">
-                                    <Label className="text-sm font-medium">
-                                        Số lượng người
-                                    </Label>
-                                    <Input
-                                        type="number"
-                                        {...field}
-                                        className="border rounded p-2"
-                                    />
-                                </FormItem>
-                            )}
-                        />
+                        <Button type="submit" variant="default">
+                            Đặt Phòng
+                        </Button>
                     </div>
-                    <Button type="submit" variant={"default"} className="mt-4">
-                        Đặt phòng
-                    </Button>
                 </form>
             </Form>
         </div>
     );
 };
 
-export default DatPhongForm;
+export default KhachHangDatPhongForm;

@@ -4,6 +4,7 @@ import React from "react";
 import { Button } from "./ui/button";
 import { auth } from "@/auth";
 import { logout } from "@/lib/actions";
+import { UserRole } from "@/types";
 
 const Header = async () => {
     const session = await auth();
@@ -31,7 +32,11 @@ const Header = async () => {
                 </Button>
                 {session ? (
                     <>
-                        <Button variant="link" asChild>
+                        <Button
+                            variant="link"
+                            asChild
+                            disabled={session.user.role === UserRole.Customer}
+                        >
                             <Link href="/admin/dashboard">
                                 {session.user.name}
                             </Link>
