@@ -1,11 +1,27 @@
 "use server";
+import { FormDatPhongSchemaType } from "@/app/admin/datphong/form-datphong";
 import { auth, signIn, signOut } from "@/auth";
 import { AuthError } from "next-auth";
 import { pool } from "./db";
-import { BookingFormData } from "@/app/(guest)/datphong/form-datphong";
-import { generateRandomString } from "./utils";
-import { DatPhong } from "@/types";
-import { SDDVFormData } from "@/app/admin/sddichvu/form-dichvu";
+import { DATPHONG, NGUOIDUNG, UserRole } from "@/types";
+import { generateRandomLetters } from "./utils";
+import { differenceInDays } from "date-fns";
+import { KhachHangDatPhongType } from "@/app/(guest)/datphong/form-datphong";
+// import { pool } from "./db";
+
+export const getSP = async () => {
+    const res = await fetch("/api/test?con=Thai%20Lan", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    });
+
+    if (!res.ok) {
+        throw new Error("Failed to fetch data");
+    }
+    return res.json();
+};
 
 export const authenticate = async (username: string, password: string) => {
     try {
@@ -33,90 +49,93 @@ export const logout = async () => {
     await signOut({ redirectTo: "/" });
 };
 
-export async function insertObject(
-    table: string,
-    data: Record<string, unknown>
-) {
-    const columns = Object.keys(data);
-    const values = Object.values(data);
+export const datPhongQuaNhanVien = async (data: FormDatPhongSchemaType) => {
+    const session = await auth();
 
-    // Build parameter names: @id, @name, @age
-    const params = columns.map((col) => "@" + col);
-
-    // Build the query
-    const query = `
-        INSERT INTO ${table} (${columns.join(", ")})
-        OUTPUT INSERTED.*
-        VALUES (${params.join(", ")})
-    `;
-
-    const request = pool.request();
-
-    // Bind parameters
-    columns.forEach((col, i) => {
-        request.input(col, values[i]);
-    });
-
-    return await request.query(query);
-}
-
-export const insertDatPhong = async (data: BookingFormData) => {
-    const sesion = await auth();
-
-    const MaPhongResult = await pool
+    const user = await pool
         .request()
-        .input("from", data.date.from)
-        .input("to", data.date.to)
-        .input("roomType", data.roomType).query<{ MaPhong: string }>(`
-            SELECT TOP 1 P.MaPhong
-            FROM PHONG P
-            JOIN LOAIPHONG L ON P.MaLP = L.MaLP
-            WHERE L.TenLP = @roomType
-            AND P.MaPhong NOT IN (
-                SELECT D.MaPhong
-                FROM DATPHONG D
-                WHERE NOT (
-                    @to <= D.NgayNhan OR @from >= D.NgayTra
-                )
-            )
+        .input("MaND", generateRandomLetters())
+        .input("HoTen", data.HoTen)
+        .input("SDT", data.SDT)
+        .input("CCCD", data.CCCD)
+        .input("Email", data.Email)
+        .input("DiaChi", generateRandomLetters(60))
+        .input("ChucVu", UserRole.Customer).query<NGUOIDUNG>(`
+            INSERT INTO NGUOIDUNG (MaND, HoTen, SDT, CCCD, Email, DiaChi, ChucVu)
+            OUTPUT INSERTED.*
+            VALUES (@MaND, @HoTen, @SDT, @CCCD, @Email, @DiaChi, @ChucVu);   
         `);
 
-    console.log(MaPhongResult);
+    const phong = await pool.request().input("MaPhong", data.MaPhong).query<{
+        Gia: number;
+    }>(`
+            SELECT L.Gia FROM PHONG P JOIN LOAIPHONG L ON P.MaLP = L.MaLP  WHERE MaPhong = @MaPhong;
+        `);
 
-    const khachHang = await insertObject("KHACHHANG", {
-        MaKH: generateRandomString(), // Giả sử đã có khách hàng với mã này
-        HoTen: data.name,
-        DiaChi: data.address,
-        CCCD: data.cccd,
-        SDT: data.phone,
-        Email: data.email,
-        Hang: "Thường",
-    });
+    const tongTien =
+        differenceInDays(data.date.to, data.date.from) * phong.recordset[0].Gia;
 
-    const datPhong = {
-        MaDP: generateRandomString(),
-        MaKH: khachHang.recordset[0].MaKH, // Can truy xuat du lieu
-        MaNV: sesion?.user?.id as string, // Can truy xuat
-        MaPhong: MaPhongResult.recordset[0].MaPhong, // Can truy xuat du lieu
-        NgayDat: new Date(),
-        NgayNhan: data.date.from,
-        NgayTra: data.date.to,
-        TongTien: 500000,
-        TienCoc: 100000,
-    } satisfies DatPhong;
+    const res = await pool
+        .request()
+        .input("MaDP", generateRandomLetters())
+        .input("MaPhong", data.MaPhong)
+        .input("MaND_KhachHang", user.recordset[0].MaND)
+        .input("MaND_NhanVien", session?.user?.id)
+        .input("NgayDat", data.date.from)
+        .input("NgayNhan", data.date.from)
+        .input("NgayTra", data.date.to)
+        .input("TongTien", tongTien)
+        .input("TienCoc", tongTien * 0.3).query<DATPHONG>(`
+            INSERT INTO DATPHONG (MaDP, MaPhong, MaND_KhachHang, MaND_NhanVien, NgayDat, NgayNhan, NgayTra, TongTien, TienCoc)
+            OUTPUT INSERTED.*
+            VALUES (@MaDP, @MaPhong, @MaND_KhachHang, @MaND_NhanVien, @NgayDat, @NgayNhan, @NgayTra, @TongTien, @TienCoc);
+        `);
 
-    const res = await insertObject("DATPHONG", datPhong);
-    return res;
+    return res.recordset[0];
 };
 
-export async function insertSDDV(data: SDDVFormData) {
-    const sddv = {
-        MaDP: data.MaDP,
-        MaDV: data.MaDV,
-        SoLuong: data.SoLuong,
-        NSD: data.NSD,
-    } satisfies SDDVFormData;
+export const datPhongQuaKhachHang = async (data: KhachHangDatPhongType) => {
+    const session = await auth();
 
-    const res = await insertObject("SDDichVu", sddv);
-    return res;
-}
+    // Lay ma phong tu loai phong
+    const phong = await pool
+        .request()
+        .input("TenLP", data.TenLP)
+        .input("NgayNhan", data.date.from)
+        .input("NgayTra", data.date.to).query<{
+        MaPhong: string;
+        Gia: number;
+    }>(`
+        SELECT TOP 1 P.MaPhong, LP.Gia
+        FROM PHONG AS P
+        JOIN LOAIPHONG AS LP ON P.MaLP = LP.MaLP
+        WHERE LP.TenLP = @TenLP
+        AND P.MaPhong NOT IN (
+            SELECT D.MaPhong
+            FROM DATPHONG AS D
+            WHERE (D.NgayNhan <= @NgayTra AND D.NgayTra >= @NgayNhan)
+        );
+    `);
+
+    const tongTien =
+        differenceInDays(data.date.to, data.date.from) * phong.recordset[0].Gia;
+
+    const randomNhanVien = "ND0" + Math.floor(Math.random() + 16).toString();
+
+    const res = await pool
+        .request()
+        .input("MaDP", generateRandomLetters())
+        .input("MaPhong", phong.recordset[0].MaPhong)
+        .input("MaND_KhachHang", session?.user?.id)
+        .input("MaND_NhanVien", randomNhanVien)
+        .input("NgayNhan", data.date.from)
+        .input("NgayTra", data.date.to)
+        .input("TongTien", tongTien)
+        .input("TienCoc", tongTien * 0.3).query<DATPHONG>(`
+            INSERT INTO DATPHONG (MaDP, MaPhong, MaND_KhachHang, MaND_NhanVien, NgayDat, NgayNhan, NgayTra, TongTien, TienCoc)
+            OUTPUT INSERTED.*
+            VALUES (@MaDP, @MaPhong, @MaND_KhachHang, @MaND_NhanVien, GETDATE(), @NgayNhan, @NgayTra, @TongTien, @TienCoc);
+    `);
+
+    return res.recordset[0];
+};

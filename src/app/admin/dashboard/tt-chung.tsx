@@ -5,8 +5,14 @@ interface BaoCaoChungProps {
     icon: React.ReactNode;
     value: number;
     title: string;
+    format?: boolean;
 }
-const BaoCaoChung = ({ value, icon, title }: BaoCaoChungProps) => {
+const BaoCaoChung = ({
+    value,
+    icon,
+    title,
+    format = false,
+}: BaoCaoChungProps) => {
     return (
         <Card>
             <CardHeader>
@@ -15,10 +21,10 @@ const BaoCaoChung = ({ value, icon, title }: BaoCaoChungProps) => {
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                {title === "Doanh thu"
-                    ? new Intl.NumberFormat("vi-VN", {
-                          style: "currency",
+                {format
+                    ? new Intl.NumberFormat("vi-vn", {
                           currency: "VND",
+                          style: "currency",
                       }).format(value)
                     : value}
             </CardContent>

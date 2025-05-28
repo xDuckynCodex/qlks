@@ -7,7 +7,7 @@ import ClientDate from "./client-date";
 
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
-export type ThongKePhong = {
+export type ThongTinPhong = {
     MaPhong: string;
     TenLP: "single" | "double" | "suite" | "family" | "vip";
     Gia: number;
@@ -25,7 +25,7 @@ type statusType =
     | "reserved";
 
 // Dinh nghia cac cot cua bang
-export const columns: ColumnDef<ThongKePhong>[] = [
+export const columns: ColumnDef<ThongTinPhong>[] = [
     {
         id: "No.",
         header: () => <div className="text-center">No.</div>,
@@ -38,7 +38,7 @@ export const columns: ColumnDef<ThongKePhong>[] = [
         accessorKey: "MaPhong",
         header: () => <div className="text-center">Room ID</div>,
         cell: ({ row }) => {
-            const roomId: ThongKePhong["MaPhong"] = row.getValue("MaPhong");
+            const roomId: ThongTinPhong["MaPhong"] = row.getValue("MaPhong");
             return <div className="text-center">{roomId}</div>;
         },
     },
@@ -46,7 +46,7 @@ export const columns: ColumnDef<ThongKePhong>[] = [
         accessorKey: "TenLP",
         header: () => <div className="text-center">Room Type</div>,
         cell: ({ row }) => {
-            const roomType: ThongKePhong["TenLP"] = row.getValue("TenLP");
+            const roomType: ThongTinPhong["TenLP"] = row.getValue("TenLP");
 
             return <div className="text-center">{roomType}</div>;
         },
@@ -82,7 +82,7 @@ export const columns: ColumnDef<ThongKePhong>[] = [
     },
     {
         accessorKey: "NgayNhan",
-        header: () => <div className="text-center">Check-out Time</div>,
+        header: () => <div className="text-center">Check-in Time</div>,
         cell: ({ row }) => {
             const checkInTime: string = row.getValue("NgayNhan");
             return <ClientDate time={checkInTime} />;

@@ -1,13 +1,13 @@
-import { fetchPhong } from "@/lib/data";
-import { ThongKePhong, columns } from "./columns";
+import { fetchThongTinPhong } from "@/lib/data";
+import { ThongTinPhong, columns } from "./columns";
 import { DataTable } from "./data-table";
 
 export default async function Page() {
-    const data = await fetchPhong();
+    const data = await fetchThongTinPhong();
 
     return (
         <div className="container mx-auto">
-            <DataTable<ThongKePhong, unknown> columns={columns} data={data} />
+            <DataTable<ThongTinPhong, unknown> columns={columns} data={data} />
         </div>
     );
 }

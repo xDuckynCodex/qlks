@@ -2,7 +2,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { authConfig } from "./auth.config";
-import { fetchNhanVien } from "./lib/data";
+import { fetchNguoiDung } from "./lib/data";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
     ...authConfig,
@@ -13,7 +13,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 password: { label: "Password", type: "password" },
             },
             async authorize(credentials, request) {
-                const res = await fetchNhanVien(
+                const res = await fetchNguoiDung(
                     credentials?.username as string,
                     credentials?.password as string
                 );
@@ -22,9 +22,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     return null;
                 } else {
                     return {
-                        id: res.MaNV,
+                        id: res.MaND,
                         name: res.HoTen,
-                        email: res.SDT,
+                        email: res.Email,
                         role: res.ChucVu,
                     };
                 }
