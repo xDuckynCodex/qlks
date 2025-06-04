@@ -22,7 +22,7 @@ const chartConfig = {
     },
 } satisfies ChartConfig;
 
-interface BieuDoProp {
+interface ChartProp {
     data: {
         time: string;
         bookings: number;
@@ -30,7 +30,7 @@ interface BieuDoProp {
     }[];
 }
 
-export function BieuDo({ data }: BieuDoProp) {
+export function Chart({ data }: ChartProp) {
     return (
         <ChartContainer
             config={chartConfig}

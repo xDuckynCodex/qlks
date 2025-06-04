@@ -26,15 +26,21 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { useRouter, useSearchParams } from "next/navigation";
-
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 const loaiPhong = ["single", "double", "suite", "family", "vip"];
 
 const khachHangDatPhongSchema = z.object({
-    HoTen: z.string().min(1, "Mã phòng không được để trống"),
-    TenLP: z.string().min(1, "Mã phòng không được để trống"),
-    SDT: z.coerce.string().length(10, "Ngày đặt không được để trống"),
-    CCCD: z.string().length(12, "Ngày nhận không được để trống"),
+    HoTen: z.string().min(1, "Họ tên không được để trống"),
+    TenLP: z.string().min(1, "Loại phòng không được để trống"),
+    SDT: z
+        .string()
+        .regex(/^[0-9]+$/, "SDT chỉ được chứa các ký tự số từ 0-9")
+        .length(10, "SĐT không được để trống"),
+    CCCD: z
+        .string()
+        .regex(/^[0-9]+$/, "CCCD chỉ được chứa các ký tự số từ 0-9")
+        .length(12, "CCCD không được để trống"),
     Email: z.string().email("Email không hợp lệ"),
     date: z.object({
         from: z.date(),
@@ -58,17 +64,17 @@ const KhachHangDatPhongForm = ({
     roomType,
     reservedDates,
 }: DatPhongFormProps) => {
+    const { data: session } = useSession();
     const { toast } = useToast();
     const router = useRouter();
-    const searchParams = useSearchParams();
     const form = useForm<KhachHangDatPhongType>({
         resolver: zodResolver(khachHangDatPhongSchema),
         defaultValues: {
-            HoTen: "",
+            HoTen: session?.user.name || "",
             TenLP: roomType,
-            SDT: "",
-            CCCD: "",
-            Email: "",
+            SDT: session?.user.sdt || "",
+            CCCD: session?.user.cccd || "",
+            Email: session?.user.email || "",
             date: {
                 from: new Date(),
                 to: addDays(new Date(), 3),
@@ -77,15 +83,19 @@ const KhachHangDatPhongForm = ({
     });
 
     const onSubmit = async (data: KhachHangDatPhongType) => {
-        console.log("Booking data:", data);
-        // Handle booking logic here
+        try {
+            console.log("Booking data:", data);
+            // Handle booking logic here
+            const res = await datPhongQuaKhachHang(data);
 
-        const res = await datPhongQuaKhachHang(data);
-
-        toast({
-            title: "Đã đặt phòng thành công",
-            description: `Mã đặt phòng ${res.MaDP}`,
-        });
+            toast({
+                title: "Đã đặt phòng thành công",
+                description: `Mã đặt phòng ${res.MaDP}`,
+            });
+            router.push(`/datphong/ketqua?status=success&ma_dp=${res.MaDP}`);
+        } catch (e) {
+            router.push("/datphong/ketqua?status=fail");
+        }
     };
     return (
         <div className="w-4/5 mt-3 p-2 flex flex-col items-center space-y-4">

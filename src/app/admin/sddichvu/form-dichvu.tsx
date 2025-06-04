@@ -15,9 +15,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { TimMaDP } from "./tim-madp";
-import { DichVu } from "@/types";
+import { DICHVU } from "@/types";
 import { toast } from "@/hooks/use-toast";
-import { insertSDDV } from "@/lib/actions";
+import { datDichVu } from "@/lib/actions";
 
 const formSchema = z.object({
     MaDP: z.string().min(1, { message: "Mã đặt phòng không được để trống" }),
@@ -26,16 +26,14 @@ const formSchema = z.object({
         .number()
         .int()
         .min(1, { message: "Số lượng không được để trống" }),
-    NSD: z
-        .date()
-        .min(new Date(), { message: "Ngày sử dụng không được để trống" }),
+    NSD: z.date(),
 });
 
 export type SDDVFormData = z.infer<typeof formSchema>;
 
 interface IDangKyDichVu {
     maDP: string[];
-    dichVu: DichVu[];
+    dichVu: DICHVU[];
 }
 const DangKyDichVu = ({ maDP, dichVu }: IDangKyDichVu) => {
     const DPIds = maDP.map((item) => ({
@@ -61,12 +59,13 @@ const DangKyDichVu = ({ maDP, dichVu }: IDangKyDichVu) => {
     const onSubmit = async (data: SDDVFormData) => {
         // Handle form submission
         // server action
-        const res = await insertSDDV(data);
+        const res = await datDichVu(data);
 
-        console.log(data);
         toast({
             title: "Đăng ký dịch vụ thành công",
-            description: `Đã đăng ký dịch vụ ${res.recordset[0].MaDV} cho mã đặt phòng ${res.recordset[0].MaDP}`,
+            description: `Đã đăng ký dịch vụ ${
+                DVIds.filter((i) => i.value === res.MaDV)[0].label
+            } cho mã đặt phòng ${res.MaDP}`,
         });
     };
 

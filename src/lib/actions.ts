@@ -3,10 +3,11 @@ import { FormDatPhongSchemaType } from "@/app/admin/datphong/form-datphong";
 import { auth, signIn, signOut } from "@/auth";
 import { AuthError } from "next-auth";
 import { pool } from "./db";
-import { DATPHONG, NGUOIDUNG, UserRole } from "@/types";
+import { DATPHONG, NGUOIDUNG, SDDDICHVU, UserRole } from "@/types";
 import { generateRandomLetters } from "./utils";
 import { differenceInDays } from "date-fns";
 import { KhachHangDatPhongType } from "@/app/(guest)/datphong/form-datphong";
+import { SDDVFormData } from "@/app/admin/sddichvu/form-dichvu";
 // import { pool } from "./db";
 
 export const getSP = async () => {
@@ -139,3 +140,20 @@ export const datPhongQuaKhachHang = async (data: KhachHangDatPhongType) => {
 
     return res.recordset[0];
 };
+
+export async function datDichVu(data: SDDVFormData) {
+    const res = await pool
+        .request()
+        .input("MaDP", data.MaDP)
+        .input("MaDV", data.MaDV)
+        .input("SoLuong", data.SoLuong)
+        .input("NSD", data.NSD).query<SDDDICHVU[]>(`
+            INSERT INTO SDDichVu (MaDP, MaDV, SoLuong, NSD, DonViTinh)
+            OUTPUT INSERTED.*
+            VALUES (@MaDP, @MaDV, @SoLuong, @NSD, 'Lan');    
+    `);
+
+    return res.recordset[0];
+}
+
+// export async funciton datDichVu

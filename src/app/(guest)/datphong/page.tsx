@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import KhachHangDatPhongForm, { NgayDaDuocDat } from "./form-datphong";
 import { fetchNgayDaDuocDatTheoLoaiPhong } from "@/lib/data";
 import { TenLP } from "@/types";
@@ -12,7 +12,6 @@ const Page = async ({
     const reservedDates: NgayDaDuocDat = await fetchNgayDaDuocDatTheoLoaiPhong(
         TenLP[type]
     );
-    console.log(reservedDates);
     return (
         <div className="w-full flex justify-center">
             <KhachHangDatPhongForm

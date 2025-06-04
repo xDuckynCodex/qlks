@@ -16,7 +16,10 @@ export async function fetchNguoiDung(
             `select top 1 * from NGUOIDUNG where SDT = @username`
         );
 
-    const matchPwd = await bcrypt.compare(password, res.recordset[0].MatKhau);
+    const matchPwd = await bcrypt.compare(
+        password,
+        res.recordset[0].MatKhau as string
+    );
     if (!matchPwd) {
         return null;
     }
@@ -316,4 +319,38 @@ export async function fetchNgayDaDuocDatTheoMaPhong(MaPhong: PHONG["MaPhong"]) {
     `);
 
     return res.recordset;
+}
+
+export interface KetQuaDatPhong {
+    MaDP: string;
+    HoTen: string;
+    SDT: string;
+    Email: string;
+    CCCD: string;
+    TenLP: keyof typeof TenLP;
+    NgayNhan: Date;
+    NgayTra: Date;
+    TongTien: number;
+}
+
+export async function fetchKetQuaDatPhong(MaDP: string) {
+    const res = await pool.request().input("MaDP", MaDP).query<KetQuaDatPhong>(`
+        SELECT 
+            dp.MaDP,
+            kh.HoTen,
+            kh.SDT,
+            kh.Email,
+            kh.CCCD,
+            lp.TenLP,
+            dp.NgayNhan,
+            dp.NgayTra,
+            dp.TongTien
+        FROM DATPHONG dp
+        INNER JOIN NGUOIDUNG kh ON dp.MaND_KhachHang = kh.MaND
+        INNER JOIN PHONG p ON dp.MaPhong = p.MaPhong
+        INNER JOIN LOAIPHONG lp ON p.MaLP = lp.MaLP
+        WHERE dp.MaDP = @MaDP;
+    `);
+    console.log(res.recordset);
+    return res.recordset[0];
 }

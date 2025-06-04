@@ -32,7 +32,7 @@ export interface NGUOIDUNG {
     Email: string;
     DiaChi: string;
     ChucVu: UserRole;
-    MatKhau: string; // Optional, as it may not be needed in all contexts
+    MatKhau?: string; // Optional, as it may not be needed in all contexts
 }
 
 export interface LOAIPHONG {

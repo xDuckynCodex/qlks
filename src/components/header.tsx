@@ -48,7 +48,7 @@ const Header = async () => {
                         </form>
                     </>
                 ) : (
-                    <Button variant="link" asChild>
+                    <Button variant="link" asChild className="cursor-pointer">
                         <Link href="/login">Login</Link>
                     </Button>
                 )}

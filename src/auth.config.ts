@@ -26,9 +26,7 @@ export const authConfig = {
         // Callback này chạy mỗi khi session được tạo hoặc cập nhật.
         // Chúng ta thêm 'role' từ JWT vào đối tượng session.user để có thể truy cập ở client-side.
         async session({ session, token }) {
-            if (token.role) {
-                (session.user as IUser) = token.user;
-            }
+            (session.user as IUser) = token.user;
             return session;
         },
         async authorized({ request, auth }) {
@@ -43,7 +41,7 @@ export const authConfig = {
                 }
                 return NextResponse.next(); // Cho phép truy cập nếu là admin
             }
-            return !!auth;
+            return true;
         },
     },
     providers: [],
