@@ -28,11 +28,6 @@ const items = [
         icon: Inbox,
     },
     {
-        title: "Check-in",
-        url: "/checkin",
-        icon: Calendar,
-    },
-    {
         title: "Su dung dich vu",
         url: "/admin/sddichvu",
         icon: Search,

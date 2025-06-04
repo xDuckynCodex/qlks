@@ -12,9 +12,7 @@ export async function fetchNguoiDung(
     const res = await pool
         .request()
         .input("username", username)
-        .query<NGUOIDUNG>(
-            `select top 1 * from NGUOIDUNG where SDT = @username`
-        );
+        .execute<NGUOIDUNG>(`sp_LayNguoiDungTheoSDT`);
 
     const matchPwd = await bcrypt.compare(
         password,
@@ -27,43 +25,9 @@ export async function fetchNguoiDung(
 }
 
 export async function fetchThongTinDatPhong(): Promise<ThongTinDatPhong[]> {
-    const res = await pool.request().query<ThongTinDatPhong[]>(`
-        WITH Numbers AS (
-            SELECT TOP (1000) ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) - 1 AS Num
-            FROM sys.all_objects
-        ),
-        NgayDaDat AS (
-            SELECT 
-                DP.MaPhong,
-                DATEADD(DAY, N.Num, DP.NgayNhan) AS Ngay
-            FROM DATPHONG DP
-            JOIN Numbers N 
-                ON DATEADD(DAY, N.Num, DP.NgayNhan) < DP.NgayTra
-            WHERE DATEADD(DAY, N.Num, DP.NgayNhan) > CAST(GETDATE() AS DATE) -- chỉ lấy ngày tương lai
-        )
-        SELECT
-            P.MaPhong AS 'MaPhong',
-            LP.TenLP AS 'TenLP',
-            LP.Gia AS 'Gia',
-            P.TinhTrang AS 'TinhTrang',
-            D.NgayDat AS 'NgayDat',
-            D.NgayNhan AS 'NgayNhan',
-            D.NgayTra AS 'NgayTra',
-            ISNULL(STRING_AGG(CONVERT(VARCHAR(10), ND.Ngay, 23), ', '), '') AS NgayDaDat
-        FROM
-            PHONG AS P
-        JOIN
-            LOAIPHONG AS LP ON P.MaLP = LP.MaLP
-        LEFT JOIN
-            DATPHONG AS D ON P.MaPhong = D.MaPhong
-            AND GETDATE() BETWEEN D.NgayNhan AND D.NgayTra
-        LEFT JOIN
-            NgayDaDat AS ND ON P.MaPhong = ND.MaPhong
-        GROUP BY
-            P.MaPhong, LP.TenLP, LP.Gia, P.TinhTrang, D.NgayDat, D.NgayNhan, D.NgayTra
-        ORDER BY
-            P.MaPhong;
-    `);
+    const res = await pool
+        .request()
+        .execute<ThongTinDatPhong[]>(`sp_Get_ThongTinPhong_DaDat`);
 
     const data = res.recordset.map((phong) => {
         if (
@@ -79,28 +43,12 @@ export async function fetchThongTinDatPhong(): Promise<ThongTinDatPhong[]> {
 }
 
 export async function fetchPhongDangSD(): Promise<DATPHONG[]> {
-    const res = await pool.request().query(`
-        SELECT
-        DP.*
-    FROM
-        DATPHONG AS DP
-    JOIN
-        PHONG AS P ON DP.MaPhong = P.MaPhong
-    JOIN
-        LOAIPHONG AS LP ON P.MaLP = LP.MaLP
-    JOIN
-        NGUOIDUNG AS ND_KH ON DP.MaND_KhachHang = ND_KH.MaND 
-    JOIN
-        NGUOIDUNG AS ND_NV ON DP.MaND_NhanVien = ND_NV.MaND   
-    WHERE
-        GETDATE() BETWEEN DP.NgayNhan AND DP.NgayTra;
-        `);
+    const res = await pool.request().execute(`sp_Get_DatPhong_DangO`);
     return res.recordset;
 }
 
 export async function fetchDichVu(): Promise<DICHVU[]> {
-    const res = await pool.request().query<DICHVU[]>(`SELECT *
-    FROM DICHVU;`);
+    const res = await pool.request().execute<DICHVU[]>(`sp_Get_DichVu`);
     return res.recordset;
 }
 
@@ -110,25 +58,16 @@ interface ThongKe {
     SoLuong: number;
 }
 export async function fetchDatPhongTheoThang(): Promise<ThongKe[]> {
-    const res = await pool.request().query<ThongKe[]>(`SELECT 
-        YEAR(NgayDat) AS Nam,
-        MONTH(NgayDat) AS Thang,
-        COUNT(*) AS SoLuong
-    FROM DATPHONG
-    GROUP BY YEAR(NgayDat), MONTH(NgayDat)
-    ORDER BY Nam, Thang;
-`);
+    const res = await pool
+        .request()
+        .execute<ThongKe[]>(`sp_ThongKeDatPhong_TheoThangNam`);
     return res.recordset;
 }
 
 export async function fetchDichVuTheoThang(): Promise<ThongKe[]> {
-    const res = await pool.request().query<ThongKe[]>(`SELECT 
-        YEAR(NSD) AS Nam,
-        MONTH(NSD) AS Thang,
-        COUNT(*) AS SoLuong
-    FROM SDDICHVU
-    GROUP BY YEAR(NSD), MONTH(NSD)
-    ORDER BY Nam, Thang;`);
+    const res = await pool
+        .request()
+        .execute<ThongKe[]>(`sp_ThongKeSuDungDichVu_TheoThangNam`);
     return res.recordset;
 }
 
@@ -168,14 +107,12 @@ export async function fetchDoanhThu() {
     const res = await pool
         .request()
         .input("Thang", sql.Int, new Date().getMonth() + 1)
-        .input("Nam", sql.Int, new Date().getFullYear()).query<{
-        Thang: number;
-        Nam: number;
-        DoanhSo: number;
-    }>(`SELECT month(NgayDat) as Thang, year(NgayDat) as Nam,  SUM(TongTien) as DoanhSo
-            FROM DATPHONG
-            WHERE MONTH(NgayDat) = @Thang and YEAR(NgayDat) = @Nam
-            group by month(NgayDat), year(NgayDat)`);
+        .input("Nam", sql.Int, new Date().getFullYear())
+        .execute<{
+            Thang: number;
+            Nam: number;
+            DoanhSo: number;
+        }>(`sp_ThongKeDoanhSo_TheoThangNam`);
 
     return res.recordset[0];
 }
@@ -184,14 +121,12 @@ export async function fetchSoLuotDatPhong() {
     const res = await pool
         .request()
         .input("Thang", sql.Int, new Date().getMonth() + 1)
-        .input("Nam", sql.Int, new Date().getFullYear()).query<{
-        Thang: number;
-        Nam: number;
-        SoLuotDatPhong: number;
-    }>(`SELECT month(NgayDat) as Thang, year(NgayDat) as Nam,  COUNT(*) as SoLuotDatPhong
-            FROM DATPHONG
-            WHERE MONTH(NgayDat) = @Thang and YEAR(NgayDat) = @Nam
-            group by month(NgayDat), year(NgayDat)`);
+        .input("Nam", sql.Int, new Date().getFullYear())
+        .execute<{
+            Thang: number;
+            Nam: number;
+            SoLuotDatPhong: number;
+        }>(`sp_ThongKeSoLuotDatPhong_TheoThangNam`);
 
     return res.recordset[0];
 }
@@ -200,14 +135,12 @@ export async function fetchSoLuotSDDV() {
     const res = await pool
         .request()
         .input("Thang", sql.Int, new Date().getMonth() + 1)
-        .input("Nam", sql.Int, new Date().getFullYear()).query<{
-        Thang: number;
-        Nam: number;
-        SoLuongSDDV: number;
-    }>(`select month(NSD) as Thang, year(NSD) as Nam, count(*) as SoLuongSDDV
-        from SDDICHVU
-        WHERE MONTH(NSD) = @Thang and YEAR(NSD) = @Nam
-        group by month(NSD), year(NSD)`);
+        .input("Nam", sql.Int, new Date().getFullYear())
+        .execute<{
+            Thang: number;
+            Nam: number;
+            SoLuongSDDV: number;
+        }>(`sp_ThongKeSoLuongSuDungDichVu_TheoThangNam`);
 
     return res.recordset[0];
 }
@@ -246,77 +179,31 @@ interface LoaiPhong {
 export async function fetchLoaiPhong(status: string): Promise<LoaiPhong[]> {
     const res = await pool
         .request()
-        .input("TinhTrang", sql.NVarChar(50), status).query(`SELECT
-        LP.TenLP AS N'TenLP',
-        COUNT(P.MaPhong) AS N'SoLuong'
-        FROM
-            PHONG AS P
-        INNER JOIN
-            LOAIPHONG AS LP ON P.MaLP = LP.MaLP
-        WHERE
-            P.TinhTrang = @TinhTrang
-        GROUP BY
-            LP.TenLP;`);
+        .input("TinhTrang", sql.NVarChar(50), status)
+        .execute(`sp_ThongKeSoLuongPhong_TheoTinhTrang`);
     return res.recordset;
 }
 
 export async function fetchDoanThuThang() {
-    const res = await pool.request().query(`
-        SELECT MONTH(NgayDat) AS Thang, YEAR(NgayDat) AS Nam, SUM(TongTien) AS DoanhThu
-        FROM DATPHONG
-        WHERE MONTH(NgayDat) = MONTH(GETDATE()) AND YEAR(NgayDat) = YEAR(GETDATE())
-        GROUP BY YEAR(NgayDat), MONTH(NgayDat);`);
+    const res = await pool.request().execute(`sp_ThongKeDoanhThu_ThangHienTai`);
 
     return res.recordset[0]?.DoanhThu || 0;
 }
 
 export async function fetchNgayDaDuocDatTheoLoaiPhong(TenLP: TenLP) {
-    const res = await pool.request().input("TenLP", sql.NVarChar(50), TenLP)
-        .query<{ Ngay: Date }[]>(`
-        WITH DATPHONG_LOAIPHONG AS (
-            SELECT DP.NgayNhan, DP.NgayTra
-            FROM DATPHONG DP
-            JOIN PHONG P ON DP.MaPhong = P.MaPhong
-            JOIN LOAIPHONG LP ON P.MaLP = LP.MaLP
-            WHERE LP.TenLP = @TenLP
-        ),
-        Numbers AS (
-            SELECT TOP (1000) ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) - 1 AS Num
-            FROM sys.all_objects -- đủ lớn để sinh dãy số
-        ),
-        BookedDates AS (
-            SELECT DATEADD(DAY, N.Num, D.NgayNhan) AS Ngay
-            FROM DATPHONG_LOAIPHONG D
-            JOIN Numbers N ON DATEADD(DAY, N.Num, D.NgayNhan) < D.NgayTra
-        )
-        SELECT DISTINCT Ngay
-        FROM BookedDates
-        ORDER BY Ngay;
-    `);
+    const res = await pool
+        .request()
+        .input("TenLP", sql.NVarChar(50), TenLP)
+        .execute<{ Ngay: Date }[]>(`sp_LietKeNgayDaDat_TheoLoaiPhong`);
 
     return res.recordset;
 }
 
 export async function fetchNgayDaDuocDatTheoMaPhong(MaPhong: PHONG["MaPhong"]) {
-    const res = await pool.request().input("MaPhong", sql.NVarChar(50), MaPhong)
-        .query<{ Ngay: Date }[]>(`
-        WITH Numbers AS (
-            SELECT TOP (1000) ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) - 1 AS Num
-            FROM sys.all_objects
-        ),
-        NgayDaDat AS (
-            SELECT 
-                DATEADD(DAY, N.Num, DP.NgayNhan) AS Ngay
-            FROM DATPHONG DP
-            JOIN Numbers N 
-                ON DATEADD(DAY, N.Num, DP.NgayNhan) < DP.NgayTra
-            WHERE DP.MaPhong = @MaPhong
-        )
-        SELECT DISTINCT Ngay
-        FROM NgayDaDat
-        ORDER BY Ngay;
-
-    `);
+    const res = await pool
+        .request()
+        .input("MaPhong", sql.NVarChar(50), MaPhong)
+        .execute<{ Ngay: Date }[]>(`sp_LietKeNgayDaDat_TheoMaPhong`);
 
     return res.recordset;
 }
@@ -334,23 +221,9 @@ export interface KetQuaDatPhong {
 }
 
 export async function fetchKetQuaDatPhong(MaDP: string) {
-    const res = await pool.request().input("MaDP", MaDP).query<KetQuaDatPhong>(`
-        SELECT 
-            dp.MaDP,
-            kh.HoTen,
-            kh.SDT,
-            kh.Email,
-            kh.CCCD,
-            lp.TenLP,
-            dp.NgayNhan,
-            dp.NgayTra,
-            dp.TongTien
-        FROM DATPHONG dp
-        INNER JOIN NGUOIDUNG kh ON dp.MaND_KhachHang = kh.MaND
-        INNER JOIN PHONG p ON dp.MaPhong = p.MaPhong
-        INNER JOIN LOAIPHONG lp ON p.MaLP = lp.MaLP
-        WHERE dp.MaDP = @MaDP;
-    `);
-    console.log(res.recordset);
+    const res = await pool
+        .request()
+        .input("MaDP", MaDP)
+        .execute<KetQuaDatPhong>(`sp_LayChiTietDatPhongTheoMaDP`);
     return res.recordset[0];
 }

@@ -61,11 +61,8 @@ export const datPhongQuaNhanVien = async (data: FormDatPhongSchemaType) => {
         .input("CCCD", data.CCCD)
         .input("Email", data.Email)
         .input("DiaChi", generateRandomLetters(60))
-        .input("ChucVu", UserRole.customer).query<NGUOIDUNG>(`
-            INSERT INTO NGUOIDUNG (MaND, HoTen, SDT, CCCD, Email, DiaChi, ChucVu)
-            OUTPUT INSERTED.*
-            VALUES (@MaND, @HoTen, @SDT, @CCCD, @Email, @DiaChi, @ChucVu);   
-        `);
+        .input("ChucVu", UserRole.customer)
+        .execute<NGUOIDUNG>(`sp_UpsertNguoiDung`);
 
     const phong = await pool.request().input("MaPhong", data.MaPhong).query<{
         Gia: number;
@@ -86,11 +83,8 @@ export const datPhongQuaNhanVien = async (data: FormDatPhongSchemaType) => {
         .input("NgayNhan", data.date.from)
         .input("NgayTra", data.date.to)
         .input("TongTien", tongTien)
-        .input("TienCoc", tongTien * 0.3).query<DATPHONG>(`
-            INSERT INTO DATPHONG (MaDP, MaPhong, MaND_KhachHang, MaND_NhanVien, NgayDat, NgayNhan, NgayTra, TongTien, TienCoc)
-            OUTPUT INSERTED.*
-            VALUES (@MaDP, @MaPhong, @MaND_KhachHang, @MaND_NhanVien, @NgayDat, @NgayNhan, @NgayTra, @TongTien, @TienCoc);
-        `);
+        .input("TienCoc", tongTien * 0.3)
+        .execute<DATPHONG>(`sp_InsertDatPhong`);
 
     return res.recordset[0];
 };
@@ -103,20 +97,11 @@ export const datPhongQuaKhachHang = async (data: KhachHangDatPhongType) => {
         .request()
         .input("TenLP", data.TenLP)
         .input("NgayNhan", data.date.from)
-        .input("NgayTra", data.date.to).query<{
-        MaPhong: string;
-        Gia: number;
-    }>(`
-        SELECT TOP 1 P.MaPhong, LP.Gia
-        FROM PHONG AS P
-        JOIN LOAIPHONG AS LP ON P.MaLP = LP.MaLP
-        WHERE LP.TenLP = @TenLP
-        AND P.MaPhong NOT IN (
-            SELECT D.MaPhong
-            FROM DATPHONG AS D
-            WHERE (D.NgayNhan <= @NgayTra AND D.NgayTra >= @NgayNhan)
-        );
-    `);
+        .input("NgayTra", data.date.to)
+        .execute<{
+            MaPhong: string;
+            Gia: number;
+        }>(`sp_FindAvailableRoom`);
 
     const tongTien =
         differenceInDays(data.date.to, data.date.from) * phong.recordset[0].Gia;
@@ -129,14 +114,12 @@ export const datPhongQuaKhachHang = async (data: KhachHangDatPhongType) => {
         .input("MaPhong", phong.recordset[0].MaPhong)
         .input("MaND_KhachHang", session?.user?.id)
         .input("MaND_NhanVien", randomNhanVien)
+        .input("NgayDat", new Date())
         .input("NgayNhan", data.date.from)
         .input("NgayTra", data.date.to)
         .input("TongTien", tongTien)
-        .input("TienCoc", tongTien * 0.3).query<DATPHONG>(`
-            INSERT INTO DATPHONG (MaDP, MaPhong, MaND_KhachHang, MaND_NhanVien, NgayDat, NgayNhan, NgayTra, TongTien, TienCoc)
-            OUTPUT INSERTED.*
-            VALUES (@MaDP, @MaPhong, @MaND_KhachHang, @MaND_NhanVien, GETDATE(), @NgayNhan, @NgayTra, @TongTien, @TienCoc);
-    `);
+        .input("TienCoc", tongTien * 0.3)
+        .execute<DATPHONG>(`sp_InsertDatPhong`);
 
     return res.recordset[0];
 };
@@ -147,11 +130,8 @@ export async function datDichVu(data: SDDVFormData) {
         .input("MaDP", data.MaDP)
         .input("MaDV", data.MaDV)
         .input("SoLuong", data.SoLuong)
-        .input("NSD", data.NSD).query<SDDDICHVU[]>(`
-            INSERT INTO SDDichVu (MaDP, MaDV, SoLuong, NSD, DonViTinh)
-            OUTPUT INSERTED.*
-            VALUES (@MaDP, @MaDV, @SoLuong, @NSD, 'Lan');    
-    `);
+        .input("NSD", data.NSD)
+        .execute<SDDDICHVU[]>(`sp_Insert_SDDichVu`);
 
     return res.recordset[0];
 }
